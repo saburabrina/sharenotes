@@ -19,6 +19,7 @@ var usersRouter = require('./routes/users');
 var notesRouter = require('./routes/notes');
 
 var app = express();
+console.log("Running on", app.get('env'));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -46,9 +47,11 @@ app.use(function(err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
+    console.error(req.url, err.message);
+
+  // User feedback
   res.status(err.status || 500);
-  res.render('error');
+  res.json({ msg: err.clientMsg? err.clientMsg : "Something Got Wrong!" });
 });
 
 module.exports = app;
