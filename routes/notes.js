@@ -1,7 +1,17 @@
 const express = require('express');
+const mongoose = require('mongoose');
 
 const Notes = require('../models/notes');
 const notesRouter = express.Router();
+
+function Note(note) {
+    var Note = {}
+    if(note.title) Note.title = note.title;
+    if(note.description) Note.description = note.description;
+    if(note.content) Note.content = note.content;
+    if(note.publish) Note.publish = note.publish;
+    return Note;
+}
 
 notesRouter.use((req, res, next) => {
     res.setHeader('Content-Type', 'application/json');
@@ -9,11 +19,25 @@ notesRouter.use((req, res, next) => {
     next();
 });
 
+notesRouter.use('/:noteId', (req, res, next) => {
+    if(mongoose.isValidObjectId(req.params.noteId)) next();
+    else next({ 
+        status: 404,
+        clientMsg: "Inexistent note", 
+        message: "User tried to retrive note by an invalid note id",
+        value: req.params.noteId
+    });
+});
+
 notesRouter.route('/')
+// find public notes
 .get((req, res, next) => {
-    var filter = {};
-    if(req.body.title) filter = { title: req.body.title };
-    
+    if (!req.body.filter) res.json({});
+    else next();
+}, (req, res, next) => {
+    var filter = Note(req.body.filter);
+    filter.publish = true;
+
     Notes.find(filter)
     .then((notes) => {
         res.json(notes);
@@ -25,16 +49,16 @@ notesRouter.route('/')
     });
 })
 .post((req, res, next) => {
-    var newNote = {}
-    if(!req.body.title || !req.body.description) return res.json({});
-    
-    newNote.title = req.body.title;
-    newNote.description = req.body.description;
-    newNote.content = req.body.content;
-
-    Notes.create(newNote)
+    if(!req.body.note) res.json({});
+    else next();
+}, (req, res, next) => {
+    var note = Note(req.body.note);
+    var [isvalid, err] = Notes.isValid(note);
+    if (!isvalid) next(err);
+    else next();
+}, (req, res, next) => {
+    Notes.create(note)
     .then((note) => {
-        console.log('Note Created ', note);
         res.json(note);
     }, (err) => next(err))
     .catch((err) => next(err));
@@ -47,21 +71,21 @@ notesRouter.route("/:noteId")
     .catch((err) => next(err));
 })
 // update note
-.post((req, res, next) => { 
-    var newNote = {}
-    
-    if(req.body.title) newNote.title = req.body.title;
-    if(req.body.description) newNote.description = req.body.description;
-    if(req.body.content) newNote.content = req.body.content;
-    if(req.body.publish) newNote.publish = req.body.publish;
-
-    Notes.findByIdAndUpdate(
-        req.params.noteId,
-        newNote,
-        { new: true })
+// only to authors
+.post((req, res, next) => {
+    if(!req.body.note) res.json({});
+    else next();
+}, (req, res, next) => { 
+    var updates = Note(req.body.note);
+    var [isvalid, err] = Notes.isValid(updates, false);
+    if (!isvalid) next(err);
+    else next();
+}, (req, res, next) => {
+    Notes.findByIdAndUpdate(req.params.noteId, updates, { new: true })
     .then((note) => res.json(note) , (err) => next(err))
     .catch((err) => next(err));
 })
+// only to authors
 .delete((req, res, next) => { 
     Notes.findByIdAndDelete(req.params.noteId)
     .then((note) => res.json(note) , (err) => next(err))
