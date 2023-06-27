@@ -4,8 +4,11 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var helmet = require('helmet');
+const passport = require('passport');
 const mongoose = require('mongoose'); 
-const config = require('./config');
+const config = require('./config/config');
+
+require('./config/passport')(passport);
 
 dburl = config.dburl;
 const connect = mongoose.connect(dburl);
@@ -31,6 +34,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(helmet());
+app.use(passport.initialize());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
@@ -47,8 +51,8 @@ app.use(function(err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-    console.error(req.url, err.message);
-
+  console.error(req.url, err.message);
+  
   // User feedback
   res.status(err.status || 500);
   res.json({ msg: err.clientMsg? err.clientMsg : "Something Got Wrong!" });
