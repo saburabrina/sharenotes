@@ -1,9 +1,8 @@
 var JwtStrategy = require('passport-jwt').Strategy;
 var User = require('../models/user');
-const config = require('./config');
 
 var options = {
-    secretOrKey: config.publicKey,
+    secretOrKey: process.env.PUB_KEY,
     algorithms: ['RS256'],
     jwtFromRequest: (req) => {
         var token = null;

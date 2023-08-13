@@ -6,14 +6,15 @@ var logger = require('morgan');
 var helmet = require('helmet');
 const passport = require('passport');
 const mongoose = require('mongoose'); 
-const config = require('./config/config');
+const dotenv = require('dotenv');
+const utils = require('./lib/utils');
 
-require('./config/passport')(passport);
+dotenv.config({path: `.env.${process.env.NODE_ENV}`});
 
-dburl = config.dburl;
-const connect = mongoose.connect(dburl);
+require('./passport/passport')(passport);
 
-connect.then((db) => {
+dburl = utils.getDBURL();
+mongoose.connect(dburl).then((db) => {
   console.log("Connected correctly to server");
 }, (err) => { console.log(err); });
 
