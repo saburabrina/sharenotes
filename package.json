@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "set DEBUG=sharenotes:* && set NODE_ENV=development&& node ./bin/www",
+    "dev-env": "set DEBUG=sharenotes:* && set NODE_ENV=development&& node ./bin/www",
     "db": "mongod --dbpath=\"Documents\\mongodb\\data\" --bind_ip 127.0.0.1",
-    "tests": "set DEBUG=sharenotes:* && set NODE_ENV=test&& node ./bin/www"
+    "tests": "set DEBUG=sharenotes:* && set NODE_ENV=test&& jest"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
@@ -21,5 +21,9 @@
     "morgan": "~1.9.1",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.6.4",
+    "supertest": "^6.3.3"
   }
 }

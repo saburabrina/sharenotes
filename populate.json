@@ -1,0 +1,28 @@
+{
+    "user": [],
+    "note": [
+        {
+            "title": "Instance Methods vs Static Methods",
+            "description": "What is the difference between instance methods and static methods",
+            "content": "Instance methods are methods that are called for objects, for an instance of a class. Static methods are called for the class itself, not the instance.",
+            "publish": true
+        },
+        {
+            "title": "How to add file chunks on commits",
+            "content": "Use 'git add -p file-name' to cut the file on chunks. git will show the chunks and you can choose if you will add each of them on commit by:\nType y (yes) to add the chunk\nType n (no) to not add the chunk\nType q (quit) to no stage this chunk or any of the remaining ones\nType a (all) to stage this chunk and all the later ones in the file\nType d to not stage this chunk or any of the later chunks in the file\nType e (edit) to manually edit the current chunk\nType s (split) to split this chunk into smaller hunks\nType g (go) to select a chunk to go to\nType j to leave this chunk undecided and see next undecided chunk\nType J to leave this chunk undecided and see next chunk\nType / to search for  a chunk matching the given regex\nType ? to print help",
+            "publish": false
+        },
+        {
+            "title" : "What are the SOLID Principles",
+            "description" : "Explaining The Software Design S.O.L.I.D. Principles for OOP",
+            "content" : "1. S stands for Single Responsability Principle. It says that each class must have one and only kind of responsability.",
+            "publish" : false
+        },
+        {
+            "title": "var vs. let",
+            "description": "What is the difference between var and let",
+            "content": "'let' throw an error when a variable is declared twice (or more).",
+            "publish": true
+        }
+    ]
+}
