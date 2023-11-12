@@ -1,25 +1,47 @@
-const request = require('supertest');
 const { describe, expect, test, beforeAll, afterAll } = require('@jest/globals');
+const { clearDatabase, insertNotes, insertUsers } = require('../testdbsetup');
+const request = require('supertest');
 const app = require('../app');
 const errors = require('../lib/errors');
-const { initializeDatabase, clearDatabase } = require('../testdbsetup');
+const utils = require('../lib/utils');
 
 let notes;
 let publishedNotes;
 let aPublishedNote;
 
+let users;
+let aJWT;
+
+let aNonCreatedNote = {
+    title : "How to walk",
+    content : "move a foot then the other",
+    publish : false
+};
+
+function dbDataToJSONFormat (data) {
+    let v = {...data._doc}; 
+    v._id = data._id.toString(); 
+    v.createdAt = v.createdAt.toJSON();
+    v.updatedAt = v.updatedAt.toJSON();
+    return v; 
+}
+
 beforeAll(() => {
-    return initializeDatabase().then((ns) => {
-        notes = ns.map((v) => { 
-            n = {...v._doc}; 
-            n._id = v._id.toString(); 
-            n.createdAt = n.createdAt.toJSON();
-            n.updatedAt = n.updatedAt.toJSON();
-            return n; 
-        });
-        publishedNotes = notes.filter((v) => v.publish);
-        aPublishedNote = publishedNotes[0];
-    });
+    return Promise.all([
+            insertNotes(),
+            insertUsers()
+        ])
+        .then(([ns, us]) => {
+            notes = ns.map(dbDataToJSONFormat);
+            publishedNotes = notes.filter((v) => v.publish);
+            aPublishedNote = publishedNotes[0];
+
+            users = us.map(dbDataToJSONFormat);
+            aJWT = utils.issueJWT(users[0]);
+            aJWT.expires = parseInt(aJWT.expires)/1000;
+            return;
+        })
+        .catch((err) => console.log(err));
 });
 
 afterAll(() => {
@@ -47,7 +69,25 @@ describe('GET /notes/', () => {
         });
     });
 
-    test('no filter field req must return empty object', () => {
+    describe('retrive with filter', () => {
+        test('retrive by title', () => {
+        const body = { filter: { title : aPublishedNote.title }};
+        return request(app)
+            .get('/notes/')
+            .set('Content-Type', 'application/json')
+            .send(body)
+            .then((response) => {
+                expect(response.statusCode).toBe(200);
+                expect(response.header['content-type']).toBe('application/json; charset=utf-8');
+                expect(response.body).toHaveLength(1);
+                expect(response.body[0]).toEqual(aPublishedNote);
+            });    
+        });
+    
+        test.todo('retrieve by date');
+    });
+
+    test('missing filter field req must return empty object', () => {
     return request(app)
         .get('/notes/')
         .set('Content-Type', 'application/json')
@@ -56,23 +96,9 @@ describe('GET /notes/', () => {
             expect(response.header['content-type']).toBe('application/json; charset=utf-8');
             expect(response.body).toEqual({});
         });
-    });
+    });  
 
-    test('retrive with filter', () => {
-    const body = { filter: { title : aPublishedNote.title }};
-    return request(app)
-        .get('/notes/')
-        .set('Content-Type', 'application/json')
-        .send(body)
-        .then((response) => {
-            expect(response.statusCode).toBe(200);
-            expect(response.header['content-type']).toBe('application/json; charset=utf-8');
-            expect(response.body).toHaveLength(1);
-            expect(response.body[0]).toEqual(aPublishedNote);
-        });    
-    });
-
-    test('invalid fields in filter wont be reconigzed', () => {
+    test('unexpected fields in filter wont be reconigzed', () => {
     const body = { filter: { name : aPublishedNote.title }};
     return request(app)
         .get('/notes/')
@@ -85,12 +111,36 @@ describe('GET /notes/', () => {
         });
     });
 
-    test.todo('filter fields with invalid values');
+    describe('filter fields with invalid values', () => {
+        test.todo('invalid value for publish field');
+
+        test.todo('invalid value for date');
+    });
 
 });
 
 describe('POST /notes/', () => {
-    test.todo('create a valid note');
+    test('create a valid note', () => {
+        const body = { note: aNonCreatedNote };
+        const domain = 'localhost';
+        return request(app)
+        .post('/notes')
+        .set('Content-Type', 'application/json')
+        .set('Cookie', [
+            `jwt=${aJWT.token}; Max-Age=${aJWT.expires}; Path=/; HttpOnly; Domain=${domain}`
+        ])
+        .send(body)
+        .then((response) => {
+            expect(response.statusCode).toBe(200);
+            expect(response.body).toHaveProperty("title", aNonCreatedNote.title);
+            expect(response.body).toHaveProperty("content", aNonCreatedNote.content);
+            expect(response.body).toHaveProperty("publish", aNonCreatedNote.publish);
+            expect(response.body).toHaveProperty("description");
+            expect(response.body).toHaveProperty("_id");
+            expect(response.body).toHaveProperty("createdAt");
+            expect(response.body).toHaveProperty("updatedAt");
+        });
+    });
 
     test.todo('send a empty note');
 

@@ -1,5 +1,18 @@
 {
-    "user": [],
+    "user": [
+        {
+            "name": "Vaughan Knox",
+            "nickname": "VK",
+            "email": "et@protonmail.com",
+            "password": "password"
+        },
+        {
+            "name": "Carla Roman",
+            "nickname": "CarlaR",
+            "email": "carla_roman@icloud.couk",
+            "password": "HFM43HWH5JM"
+        }
+    ],
     "note": [
         {
             "title": "Instance Methods vs Static Methods",
@@ -15,7 +28,7 @@
         {
             "title" : "What are the SOLID Principles",
             "description" : "Explaining The Software Design S.O.L.I.D. Principles for OOP",
-            "content" : "1. S stands for Single Responsability Principle. It says that each class must have one and only kind of responsability.",
+            "content" : "1. S stands for Single Responsability Principle. It says that each class must have one and only kind of responsability (example, a class should not have both printing logic and business logic), so it will have fewer test cases, a more organized code and fewer dependencies.\n2. O stands for Open-Closed Principle. It says a class should be open for extension and closed to modification, therefore, open to adding new functionality but not changing tested and reliable code.",
             "publish" : false
         },
         {
