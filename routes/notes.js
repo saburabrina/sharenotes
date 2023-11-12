@@ -1,7 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
-
-const Notes = require('../models/notes');
+const passport = require('passport');
+const errors = require('../lib/errors');
+const Notes = require('../models/note');
 const notesRouter = express.Router();
 
 function Note(note) {
@@ -21,19 +22,16 @@ notesRouter.use((req, res, next) => {
 
 notesRouter.use('/:noteId', (req, res, next) => {
     if(mongoose.isValidObjectId(req.params.noteId)) next();
-    else next({ 
-        status: 404,
-        clientMsg: "Inexistent note", 
-        message: "User tried to retrive note by an invalid note id",
-        value: req.params.noteId
-    });
+    else next(errors.inexistentNoteId(req.params.noteId));
 });
 
 notesRouter.route('/')
 // find public notes
+// must return unpublished notes from user or published notes
 .get((req, res, next) => {
     if (!req.body.filter) res.json({});
     else next();
+
 }, (req, res, next) => {
     var filter = Note(req.body.filter);
     filter.publish = true;
@@ -48,15 +46,19 @@ notesRouter.route('/')
         next(err);
     });
 })
-.post((req, res, next) => {
+.post(passport.authenticate('jwt', { session: false }),
+(req, res, next) => {
     if(!req.body.note) res.json({});
     else next();
+
 }, (req, res, next) => {
     var note = Note(req.body.note);
     var [isvalid, err] = Notes.isValid(note);
     if (!isvalid) next(err);
     else next();
+
 }, (req, res, next) => {
+    var note = Note(req.body.note);
     Notes.create(note)
     .then((note) => {
         res.json(note);
@@ -64,6 +66,7 @@ notesRouter.route('/')
     .catch((err) => next(err));
 });
 
+// must find only from unpublished notes from user or published notes
 notesRouter.route("/:noteId")
 .get((req, res, next) => {
     Notes.findById(req.params.noteId)
@@ -71,22 +74,25 @@ notesRouter.route("/:noteId")
     .catch((err) => next(err));
 })
 // update note
-// only to authors
-.post((req, res, next) => {
+.post(passport.authenticate('jwt', { session: false }),
+(req, res, next) => {
     if(!req.body.note) res.json({});
     else next();
+
 }, (req, res, next) => { 
     var updates = Note(req.body.note);
     var [isvalid, err] = Notes.isValid(updates, false);
     if (!isvalid) next(err);
     else next();
+    
 }, (req, res, next) => {
+    var updates = Note(req.body.note);
     Notes.findByIdAndUpdate(req.params.noteId, updates, { new: true })
     .then((note) => res.json(note) , (err) => next(err))
     .catch((err) => next(err));
 })
-// only to authors
-.delete((req, res, next) => { 
+.delete(passport.authenticate('jwt', { session: false }),
+(req, res, next) => { 
     Notes.findByIdAndDelete(req.params.noteId)
     .then((note) => res.json(note) , (err) => next(err))
     .catch((err) => next(err));

@@ -3,6 +3,7 @@ const router = express.Router();
 
 const Users = require('../models/user');
 const utils = require('../lib/utils');
+const errors = require('../lib/errors');
 
 function User(user) {
     var User = {};
@@ -30,22 +31,14 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/login', (req, res, next) => {
-    if(!req.body.credentials || !req.body.credentials.password || !req.body.credentials.email) next({ 
-        status: 200,
-        clientMsg: "Invalid Credentials", 
-        message: "Missing required data to login"
-    });
+    if(!req.body.credentials || !req.body.credentials.password || !req.body.credentials.email) 
+    next(errors.missingRequiredDataToLogin());
     next();
 }, function(req, res, next){
     var cred = Credentials(req.body.credentials);
     Users.findOne({ email: cred.email })
     .then((user) => { 
-        var err = { 
-            status: 200,
-            clientMsg: "Authentication Failed! Check your credentials.", 
-            message: "Inexistent user with those credentials",
-            value: req.body.credentials
-        }
+        var err = errors.nonExistentUserWithGivenCredentials(req.body.credentials);
 
         if (!user) {
             err.message += ": email";
@@ -69,11 +62,10 @@ router.post('/login', (req, res, next) => {
 });
 
 router.post('/signup', (req, res, next) => {
-    if(!req.body.user || !req.body.user.password || !Users.isValid(req.body.user)) next({ 
-        status: 200,
-        clientMsg: "Invalid User", 
-        message: "Missing required data to create user"
-    });
+    if(!req.body.user || !req.body.user.password || 
+        !req.body.user.name || !req.body.user.nickname || !req.body.user.email) 
+    next(errors.missingRequiredDataToSignup());
+    
     next();
 }, (req, res, next) => {
     var user = User(req.body.user);
