@@ -2,16 +2,17 @@ const express = require('express');
 const router = express.Router();
 
 const Users = require('../models/user');
+const { Signup }  = require('../models/userModel');
 const utils = require('../lib/utils');
 const errors = require('../lib/errors');
 
-function User(user) {
+function User (user) {
     var User = {};
     User.name = user.name;
     User.nickname = user.nickname;
     User.email = user.email;
     return User;
-}
+};
 
 function Credentials(cred) {
     var Cred = {};
@@ -68,14 +69,11 @@ router.post('/signup', (req, res, next) => {
     
     next();
 }, (req, res, next) => {
-    var user = User(req.body.user);
-    [user.salt, user.hash] = utils.generatePassword(req.body.user.password);
-
-    Users.create(user)
+    Signup(req.body.user)
     .then((user) => {
-        res.json(User(req.body.user));
-    },(err) => next(err))
-    .catch((err) => next(err));
+        res.json(User(user));
+    })
+    .catch((err) => next(errors.basicUserError(err.message, "Invalid user")));
 },);
 
 module.exports = router;

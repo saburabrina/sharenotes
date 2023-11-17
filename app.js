@@ -13,10 +13,9 @@ dotenv.config({path: `.env.${process.env.NODE_ENV}`});
 
 require('./passport/passport')(passport);
 
-dburl = utils.getDBURL();
-mongoose.connect(dburl).then((db) => {
-  console.log("Connected correctly to server");
-}, (err) => { console.log(err); });
+mongoose.connect(utils.getDBURL()).then(
+(db) => console.log("Connected correctly to Database."), 
+(err) => console.log(err));
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -43,7 +42,10 @@ app.use('/notes', notesRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  next(createError(404));
+  next({
+    status: 404,
+    clientMsg: "Page not found\nWhere were you going?",
+  });
 });
 
 // error handler
@@ -51,7 +53,6 @@ app.use(function(err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
-
   console.error(req.url, err.message);
   
   // User feedback

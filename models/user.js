@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+const { emailREGEX } = require('../lib/utils');
 
 const userSchema = new Schema({
     name: {
@@ -16,20 +17,22 @@ const userSchema = new Schema({
     email: {
         type: String,
         required: true,
+        unique: true,
         lowercase: true,
         trim: true,
-        match: /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i
+        match: emailREGEX
     },
-    hash: String, 
-    salt: String
+    hash: {
+        type: String,
+        required: true
+    }, 
+    salt: {
+        type: String,
+        required: true
+    }
 }, {
     timestamps: true
 });
-
-userSchema.statics.isValid = (user) => {
-    if(!user.name || !user.nickname || !user.email) return false;
-    return true;
-}
 
 var UserModel = mongoose.model('User', userSchema);
 module.exports = UserModel;
