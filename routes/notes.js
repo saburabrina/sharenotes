@@ -1,17 +1,51 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const passport = require('passport');
+const { filterNotes, createNote, findNoteById, updateNote, deleteNote } = require('../models/noteModel');
 const errors = require('../lib/errors');
-const Notes = require('../models/note');
 const notesRouter = express.Router();
 
 function Note(note) {
     var Note = {}
-    if(note.title) Note.title = note.title;
-    if(note.description) Note.description = note.description;
-    if(note.content) Note.content = note.content;
-    if(note.publish) Note.publish = note.publish;
+    Note._id = note._id;
+    Note.title = note.title;
+    Note.description = note.description;
+    Note.content = note.content;
+    Note.publish = note.publish;
+    Note.createdAt = note.createdAt;
+    Note.updatedAt = note.updatedAt;
     return Note;
+}
+
+function Notes(notes) {
+    var Notes = [];
+    
+    for(var i = 0; i < notes.length; i++){
+        var note = Note(notes[i]);
+        Notes.push(note);
+    }
+
+    return Notes;
+}
+
+function Filter(filter) {
+    var Filter = {}
+    if(filter.title) Filter.title = filter.title;
+    if(filter.description) Filter.description = filter.description;
+    if(filter.content) Filter.content = filter.content;
+    if(filter.publish) Filter.publish = filter.publish;
+    if(filter.createdAt) Filter.createdAt = filter.createdAt;
+    if(filter.updatedAt) Filter.updatedAt = filter.updatedAt;
+    return Filter;
+}
+
+function Updates(update) {
+    var Updates = {}
+    if(update.title) Updates.title = update.title;
+    if(update.description) Updates.description = update.description;
+    if(update.content) Updates.content = update.content;
+    if(update.publish) Updates.publish = update.publish;
+    return Updates;
 }
 
 notesRouter.use((req, res, next) => {
@@ -25,26 +59,19 @@ notesRouter.use('/:noteId', (req, res, next) => {
     else next(errors.inexistentNoteId(req.params.noteId));
 });
 
-notesRouter.route('/')
-// find public notes
-// must return unpublished notes from user or published notes
-.get((req, res, next) => {
+notesRouter.route('/').get(
+(req, res, next) => {
     if (!req.body.filter) res.json({});
     else next();
 
 }, (req, res, next) => {
-    var filter = Note(req.body.filter);
-    filter.publish = true;
+    var filter = Filter(req.body.filter);
 
-    Notes.find(filter)
+    filterNotes(filter)
     .then((notes) => {
-        res.json(notes);
-    }, (err) => {
-        next(err);
+        res.json(Notes(notes));
     })
-    .catch((err) => {
-        next(err);
-    });
+    .catch((err) => next(errors.basicNoteError(err.message)));
 })
 .post(passport.authenticate('jwt', { session: false }),
 (req, res, next) => {
@@ -52,49 +79,36 @@ notesRouter.route('/')
     else next();
 
 }, (req, res, next) => {
-    var note = Note(req.body.note);
-    var [isvalid, err] = Notes.isValid(note);
-    if (!isvalid) next(err);
-    else next();
-
-}, (req, res, next) => {
-    var note = Note(req.body.note);
-    Notes.create(note)
+    createNote(req.body.note)
     .then((note) => {
-        res.json(note);
-    }, (err) => next(err))
+        res.json(Note(note));
+    })
     .catch((err) => next(err));
 });
 
-// must find only from unpublished notes from user or published notes
+
 notesRouter.route("/:noteId")
 .get((req, res, next) => {
-    Notes.findById(req.params.noteId)
-    .then((note) => res.json(note) , (err) => next(err))
+    findNoteById(req.params.noteId)
+    .then((note) => res.json(Note(note)))
     .catch((err) => next(err));
 })
-// update note
 .post(passport.authenticate('jwt', { session: false }),
 (req, res, next) => {
     if(!req.body.note) res.json({});
     else next();
 
-}, (req, res, next) => { 
-    var updates = Note(req.body.note);
-    var [isvalid, err] = Notes.isValid(updates, false);
-    if (!isvalid) next(err);
-    else next();
-    
 }, (req, res, next) => {
-    var updates = Note(req.body.note);
-    Notes.findByIdAndUpdate(req.params.noteId, updates, { new: true })
-    .then((note) => res.json(note) , (err) => next(err))
+    var updates = Updates(req.body.note);
+
+    updateNote(req.params.noteId, updates)
+    .then((note) => res.json(Note(note)))
     .catch((err) => next(err));
 })
 .delete(passport.authenticate('jwt', { session: false }),
 (req, res, next) => { 
-    Notes.findByIdAndDelete(req.params.noteId)
-    .then((note) => res.json(note) , (err) => next(err))
+    deleteNote(req.params.noteId)
+    .then(() => res.end())
     .catch((err) => next(err));
 });
 

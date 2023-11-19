@@ -38,13 +38,13 @@ async function exists (user) {
     return userExists;
 }
 
-module.exports.Login = function (data) {
-    return UserModel.findOne({ email: data.email })
+module.exports.Login = function (email, password) {
+    return UserModel.findOne({ email: email })
     .then((user) => { 
         if (!user) 
         return Promise.reject(new Error("User does not exist. Given email not found."));
         
-        if (!isCorrectPassword(data.password, user.hash, user.salt)) 
+        if (!isCorrectPassword(password, user.hash, user.salt)) 
         return Promise.reject(new Error("Given password does not match given user's password."));
        
         const tokenObject = issueJWT(user);

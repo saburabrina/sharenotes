@@ -23,6 +23,7 @@ function dbDataToJSONFormat (data) {
     v._id = data._id.toString(); 
     v.createdAt = v.createdAt.toJSON();
     v.updatedAt = v.updatedAt.toJSON();
+    delete v['__v'];
     return v; 
 }
 
@@ -107,7 +108,7 @@ describe('GET /notes/', () => {
         .then((response) => {
             expect(response.statusCode).toBe(200);
             expect(response.header['content-type']).toBe('application/json; charset=utf-8');
-            expect(response.body).toHaveLength(publishedNotes.length);
+            expect(response.body).toHaveLength(notes.length);
         });
     });
 

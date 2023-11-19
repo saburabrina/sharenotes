@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const Users = require('../models/user');
 const { Signup, Login }  = require('../models/userModel');
-const utils = require('../lib/utils');
 const errors = require('../lib/errors');
 
 function User (user) {
@@ -13,13 +11,6 @@ function User (user) {
     User.email = user.email;
     return User;
 };
-
-function Credentials(cred) {
-    var Cred = {};
-    Cred.email = cred.email;
-    Cred.password = cred.password;
-    return Cred;
-}
 
 router.use((req, res, next) => {
     res.setHeader('Content-Type', 'application/json');
@@ -36,16 +27,14 @@ router.post('/login', (req, res, next) => {
     next(errors.missingRequiredDataToLogin());
     next();
 }, function(req, res, next){
-    var cred = Credentials(req.body.credentials);
-    
-    Login(cred)
+    Login(req.body.credentials.email, req.body.credentials.password)
     .then((token) => { 
         res.cookie("jwt", token.token, {maxAge: token.expires, httpOnly: true});
         res.end();
         return;
     })
     .catch((err) => {   
-        return next(errors.nonExistentUserWithGivenCredentials(cred, err.message));
+        return next(errors.nonExistentUserWithGivenCredentials(req.body.credentials, err.message));
     });
 });
 
