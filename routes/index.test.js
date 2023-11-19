@@ -114,8 +114,24 @@ describe('POST /signup/', () => {
         });
     });
 
+    test('try to signup invalid email user', ()=> {
+        const error = errors.basicUserError("Invalid data for user creation.", "Invalid user");
+        var user = users[0];
+        user.email = "blablabla";
+        const body = { user: user };
+        return request(app)
+        .post('/signup')
+        .set('Content-Type', 'application/json')
+        .send(body)
+        .then((response) => {
+            expect(response.statusCode).toBe(error.status);
+            expect(response.header['content-type']).toBe('application/json; charset=utf-8');
+            expect(response.body).toEqual({ msg: error.clientMsg });
+        });
+    });
+
     test('try to signup already created user', ()=> {
-        const error = errors.triedToSignupAlreadySignedUpUser();
+        const error = errors.basicUserError("User already exists.", "Invalid user");
         const body = { user: { ...users[0] }};
         return request(app)
         .post('/signup')

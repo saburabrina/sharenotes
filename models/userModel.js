@@ -1,5 +1,5 @@
 const UserModel = require('./user');
-const { emailREGEX, generatePassword } = require('../lib/utils');
+const { emailREGEX, generatePassword, isCorrectPassword, issueJWT } = require('../lib/utils');
 
 function User (name, nickname, email, hash, salt) {
     var User = {};
@@ -38,6 +38,20 @@ async function exists (user) {
     return userExists;
 }
 
+module.exports.Login = function (data) {
+    return UserModel.findOne({ email: data.email })
+    .then((user) => { 
+        if (!user) 
+        return Promise.reject(new Error("User does not exist. Given email not found."));
+        
+        if (!isCorrectPassword(data.password, user.hash, user.salt)) 
+        return Promise.reject(new Error("Given password does not match given user's password."));
+       
+        const tokenObject = issueJWT(user);
+        return Promise.resolve(tokenObject);  
+    });
+}
+
 module.exports.Signup = async function (data) {
     if(!isValid(data)) return Promise.reject(new Error("Invalid data for user creation."));
     if(await exists(data)) return Promise.reject(new Error("User already exists."));
@@ -45,20 +59,5 @@ module.exports.Signup = async function (data) {
     [data.salt, data.hash] = generatePassword(data.password);
     var user = UserByObject(data);
     
-    return UserModel.create(user)
-    .then((user) => user)
-    .catch((err) => err);
-    
-    /*
-    return isValid(data)
-    .then(() => doNotExists(data.email))
-    .then(() => {
-        [data.salt, data.hash] = generatePassword(data.password);
-        var user = UserByObject(data);
-    
-        return UserModel.create(user)
-    })
-    .then((user) => user)
-    .catch((err) => err);
-    */
+    return UserModel.create(user);
 }

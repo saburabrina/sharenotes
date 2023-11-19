@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const Users = require('../models/user');
-const { Signup }  = require('../models/userModel');
+const { Signup, Login }  = require('../models/userModel');
 const utils = require('../lib/utils');
 const errors = require('../lib/errors');
 
@@ -37,28 +37,15 @@ router.post('/login', (req, res, next) => {
     next();
 }, function(req, res, next){
     var cred = Credentials(req.body.credentials);
-    Users.findOne({ email: cred.email })
-    .then((user) => { 
-        var err = errors.nonExistentUserWithGivenCredentials(req.body.credentials);
-
-        if (!user) {
-            err.message += ": email";
-            next(err);
-        }
-
-        const isCorrectPassword = utils.isCorrectPassword(cred.password, user.hash, user.salt);
-        
-        if (isCorrectPassword) {
-            const tokenObject = utils.issueJWT(user);
-            res.cookie("jwt", tokenObject.token, {maxAge: tokenObject.expires, httpOnly: true});
-            res.end();
-        } else {
-            err.message += ": password";
-            next(err);
-        }
+    
+    Login(cred)
+    .then((token) => { 
+        res.cookie("jwt", token.token, {maxAge: token.expires, httpOnly: true});
+        res.end();
+        return;
     })
     .catch((err) => {   
-        next(err);
+        return next(errors.nonExistentUserWithGivenCredentials(cred, err.message));
     });
 });
 
