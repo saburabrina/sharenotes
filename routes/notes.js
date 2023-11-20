@@ -30,21 +30,21 @@ function Notes(notes) {
 
 function Filter(filter) {
     var Filter = {}
-    if(filter.title) Filter.title = filter.title;
-    if(filter.description) Filter.description = filter.description;
-    if(filter.content) Filter.content = filter.content;
-    if(filter.publish) Filter.publish = filter.publish;
-    if(filter.createdAt) Filter.createdAt = filter.createdAt;
-    if(filter.updatedAt) Filter.updatedAt = filter.updatedAt;
+    if(title in filter) Filter.title = filter.title;
+    if(description in filter) Filter.description = filter.description;
+    if(content in filter) Filter.content = filter.content;
+    if(publish in filter) Filter.publish = filter.publish;
+    if(createdAt in filter) Filter.createdAt = filter.createdAt;
+    if(updatedAt in filter) Filter.updatedAt = filter.updatedAt;
     return Filter;
 }
 
 function Updates(update) {
     var Updates = {}
-    if(update.title) Updates.title = update.title;
-    if(update.description) Updates.description = update.description;
-    if(update.content) Updates.content = update.content;
-    if(update.publish) Updates.publish = update.publish;
+    if(title in update) Updates.title = update.title;
+    if(description in update) Updates.description = update.description;
+    if(content in update) Updates.content = update.content;
+    if(publish in update) Updates.publish = update.publish;
     return Updates;
 }
 
@@ -83,7 +83,8 @@ notesRouter.route('/').get(
     .then((note) => {
         res.json(Note(note));
     })
-    .catch((err) => next(err));
+    .catch((err) => 
+        next(errors.basicNoteError(err.message, "Error on note creation. Try again.")));
 });
 
 
@@ -91,7 +92,7 @@ notesRouter.route("/:noteId")
 .get((req, res, next) => {
     findNoteById(req.params.noteId)
     .then((note) => res.json(Note(note)))
-    .catch((err) => next(err));
+    .catch((err) => next(errors.basicNoteError(err.message)));
 })
 .post(passport.authenticate('jwt', { session: false }),
 (req, res, next) => {
@@ -103,13 +104,15 @@ notesRouter.route("/:noteId")
 
     updateNote(req.params.noteId, updates)
     .then((note) => res.json(Note(note)))
-    .catch((err) => next(err));
+    .catch((err) => 
+        next(errors.basicNoteError(err.message, "Error on note update. Try again.")));
 })
 .delete(passport.authenticate('jwt', { session: false }),
 (req, res, next) => { 
     deleteNote(req.params.noteId)
     .then(() => res.end())
-    .catch((err) => next(err));
+    .catch((err) => 
+        next(errors.basicNoteError(err.message, "Error on note deletion. Try again.")));
 });
 
 module.exports = notesRouter;

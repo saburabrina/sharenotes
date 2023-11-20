@@ -3,9 +3,9 @@ const NoteModel = require('./note');
 function Note(note) {
     var Note = {}
     Note.title = note.title;
-    if(note.description) Note.description = note.description;
-    if(note.content) Note.content = note.content;
-    if(note.publish) Note.publish = note.publish;
+    if(description in note) Note.description = note.description;
+    if(content in note) Note.content = note.content;
+    if(publish in note) Note.publish = note.publish;
     return Note;
 }
 
