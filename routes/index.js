@@ -19,7 +19,7 @@ router.use((req, res, next) => {
 });
 
 router.get('/', function(req, res, next) {
-    res.render('index', { title: 'Express' });
+    res.redirect('/notes');
 });
 
 router.post('/login', (req, res, next) => {
@@ -50,6 +50,6 @@ router.post('/signup', (req, res, next) => {
         res.json(User(user));
     })
     .catch((err) => next(errors.basicUserError(err.message, "Invalid user")));
-},);
+});
 
 module.exports = router;

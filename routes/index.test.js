@@ -3,7 +3,6 @@ const { describe, test, expect, beforeAll, afterAll } = require('@jest/globals')
 const app = require('../app');
 const errors = require('../lib/errors');
 const { clearDatabase, insertUsers } = require('../testdbsetup');
-const data = require('../populate.json');
 
 const nonSignedUpUser = {
     "name": "Adria Mcknight",
@@ -19,10 +18,17 @@ const nonSignedUpUser1 = {
     "password": "5zxTPyejOX"
 };
 
-let users = data.user;
+let users = [
+    {
+        name: "Carla Roman",
+        nickname: "CarlaR",
+        email: "carla_roman@icloud.couk",
+        password: "HFM43HWH5JM"
+    }
+];
 
 beforeAll(() => {
-    return insertUsers();
+    return insertUsers(users);
 });
 
 afterAll(() => {

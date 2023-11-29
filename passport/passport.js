@@ -1,4 +1,5 @@
 var JwtStrategy = require('passport-jwt').Strategy;
+var AnonymousStrategy = require('passport-anonymous').Strategy;
 var User = require('../models/user');
 
 var options = {
@@ -11,7 +12,7 @@ var options = {
     }
 };
   
-module.exports = (passport) => 
+module.exports = (passport) => {
     passport.use(new JwtStrategy(options, (jwt_payload, done) => {
         User.findById(jwt_payload.sub)
         .then((user) => {
@@ -24,4 +25,7 @@ module.exports = (passport) =>
         .catch((err) => {
             return done(err, false);
         });
-}));
+    }));
+
+    passport.use(new AnonymousStrategy());
+}

@@ -3,14 +3,12 @@ const Note = require('./models/note');
 const User = require('./models/user');
 const utils = require('./lib/utils');
 
-const JSONdata = require('./populate.json');
-
 function initializeDatabase () {
     return new Promise();
 }
 
-function insertUsers () {
-    let users = JSONdata.user.map(({name, nickname, email, password}) => {
+function insertUsers (users) {
+    users = users.map(({name, nickname, email, password}) => {
         let [ salt, hash ] = utils.generatePassword(password);
         return { name, nickname, email, hash, salt};
     });
@@ -22,8 +20,8 @@ function insertUsers () {
     .catch((err) => console.log(err));
 }
 
-function insertNotes () {
-    return Note.insertMany(JSONdata.note).then((ns) => {
+function insertNotes (notes) {
+    return Note.insertMany(notes).then((ns) => {
         console.log("Notes insertion worked correctly");
         return ns;
     })
@@ -34,7 +32,7 @@ function clearDatabase () {
     return Promise.all([
         Note.deleteMany({}),
         User.deleteMany({})
-    ]).then(([notes, users]) => {
+    ]).then(() => {
         console.log("Notes Cleaning Worked Correctly");
         console.log("Users Cleaning Worked Correctly");
         return closeDatabase();

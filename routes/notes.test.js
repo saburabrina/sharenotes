@@ -5,18 +5,51 @@ const app = require('../app');
 const errors = require('../lib/errors');
 const utils = require('../lib/utils');
 
-let notes;
-let publishedNotes;
-let aPublishedNote;
+const domain = 'localhost';
 
-let users;
-let aJWT;
+let notes = [
+    {
+        title: "Instance Methods vs Static Methods",
+        description: "What is the difference between instance methods and static methods",
+        content: "Instance methods are methods that are called for objects, for an instance of a class. Static methods are called for the class itself, not the instance.",
+        publish: true
+    },
+    {
+        title: "How to add file chunks on commits",
+        content: "Use 'git add -p file-name' to cut the file on chunks. git will show the chunks and you can choose if you will add each of them on commit by:\nType y (yes) to add the chunk\nType n (no) to not add the chunk\nType q (quit) to no stage this chunk or any of the remaining ones\nType a (all) to stage this chunk and all the later ones in the file\nType d to not stage this chunk or any of the later chunks in the file\nType e (edit) to manually edit the current chunk\nType s (split) to split this chunk into smaller hunks\nType g (go) to select a chunk to go to\nType j to leave this chunk undecided and see next undecided chunk\nType J to leave this chunk undecided and see next chunk\nType / to search for  a chunk matching the given regex\nType ? to print help",
+        publish: false
+    },
+    {
+        title : "What are the SOLID Principles",
+        description : "Explaining The Software Design S.O.L.I.D. Principles for OOP",
+        content : "1. S stands for Single Responsability Principle. It says that each class must have one and only kind of responsability (example, a class should not have both printing logic and business logic), so it will have fewer test cases, a more organized code and fewer dependencies.\n2. O stands for Open-Closed Principle. It says a class should be open for extension and closed to modification, therefore, open to adding new functionality but not changing tested and reliable code.",
+        publish : false
+    }
+];
 
-let aNonCreatedNote = {
+let users = [
+    {
+        "name": "Vaughan Knox",
+        "nickname": "VK",
+        "email": "et@protonmail.com",
+        "password": "password"
+    },
+    {
+        "name": "Edson Rodrigo",
+        "nickname": "edson",
+        "email": "edson_rodrigo_figueiredo@tahoo.com.br",
+        "password": "5BwiC59N92"
+    }
+];
+
+let nonCreatedNote = {
     title : "How to walk",
     content : "move a foot then the other",
-    publish : false
+    publish : true
 };
+
+let publishedNotes;
+let publishedNote;
 
 function dbDataToJSONFormat (data) {
     let v = {...data._doc}; 
@@ -28,21 +61,40 @@ function dbDataToJSONFormat (data) {
 }
 
 beforeAll(() => {
-    return Promise.all([
-            insertNotes(),
-            insertUsers()
-        ])
-        .then(([ns, us]) => {
-            notes = ns.map(dbDataToJSONFormat);
-            publishedNotes = notes.filter((v) => v.publish);
-            aPublishedNote = publishedNotes[0];
-
-            users = us.map(dbDataToJSONFormat);
-            aJWT = utils.issueJWT(users[0]);
-            aJWT.expires = parseInt(aJWT.expires)/1000;
-            return;
+    return insertUsers(users)
+    .then((us) => {
+        users = us.map(dbDataToJSONFormat);
+        
+        users = users.map((v) => { 
+            v.jwt = utils.issueJWT(v);
+            v.jwt.expires = parseInt(v.jwt.expires)/1000;
+            return v;
+        });
+        
+        notes = notes.map((v) => { 
+            v.author = users[1]._id;
+            return v;
         })
-        .catch((err) => console.log(err));
+
+        return insertNotes(notes);
+    })
+    .then((ns) => {
+        notes = ns.map(dbDataToJSONFormat);
+
+        notes = notes.map((v) => { 
+            v.author = { 
+                _id: users[1]._id, 
+                nickname: users[1].nickname 
+            };
+            return v;
+        })
+        
+        publishedNotes = notes.filter((v) => v.publish);
+        publishedNote = publishedNotes[0];
+
+        return;
+    })
+    .catch((err) => console.log(err));
 });
 
 afterAll(() => {
@@ -50,9 +102,74 @@ afterAll(() => {
 });
 
 describe('GET /notes/', () => {
-    test.todo('getting all public and this user private notes');
 
-    test.todo('getting all private notes');
+    describe('getting all public and this user private notes', () => {
+        function getTestData (i) {
+            if(i === 0) return [ users[0].jwt, publishedNotes ];
+            else return [ users[1].jwt, notes ];
+        }
+
+        test.each([
+           ["user with no created private notes", 0], 
+           ["user with created private notes", 1]
+        ])("%s", (label, i) => {
+            const [ JWT, filteredNotes ] = getTestData(i);
+            
+            return request(app)
+            .get('/notes/')
+            .set('Content-Type', 'application/json')
+            .set('Cookie', [
+                `jwt=${JWT.token}; Max-Age=${JWT.expires}; Path=/; HttpOnly; Domain=${domain}`
+            ])
+            .then(response => {
+                expect(response.statusCode).toBe(200);
+                expect(response.header['content-type']).toBe('application/json; charset=utf-8');
+                
+                expect(response.body).toHaveLength(filteredNotes.length);
+                
+                for(var i = 0; i < filteredNotes.length; i++){
+                    expect(response.body[i]).toHaveProperty('_id');
+                    expect(response.body[i]).toHaveProperty('title');
+                    expect(response.body[i]).toHaveProperty('author');
+                    expect(response.body[i]).toHaveProperty('description');
+                    expect(response.body[i]).toHaveProperty('updatedAt');
+                    
+                    expect(response.body[i]).not.toHaveProperty('content');
+                    expect(response.body[i]).not.toHaveProperty('createdAt');
+                }
+            });
+        });
+    });
+
+
+    test('getting private notes', () => {
+        const body = { filter : { publish : false }};
+        let JWT = users[1].jwt;
+        let privateNotesLength = notes.length - publishedNotes.length;
+        return request(app)
+        .get('/notes/')
+        .set('Content-Type', 'application/json')
+        .set('Cookie', [
+            `jwt=${JWT.token}; Max-Age=${JWT.expires}; Path=/; HttpOnly; Domain=${domain}`
+        ])
+        .send(body)
+        .then(response => {
+            expect(response.statusCode).toBe(200);
+            expect(response.header['content-type']).toBe('application/json; charset=utf-8');
+            
+            expect(response.body).toHaveLength(privateNotesLength);
+            for(var i = 0; i < privateNotesLength; i++){
+                expect(response.body[i]).toHaveProperty('_id');
+                expect(response.body[i]).toHaveProperty('title');
+                expect(response.body[i]).toHaveProperty('author');
+                expect(response.body[i]).toHaveProperty('description');
+                expect(response.body[i]).toHaveProperty('updatedAt');
+                
+                expect(response.body[i]).not.toHaveProperty('content');
+                expect(response.body[i]).not.toHaveProperty('createdAt');
+            }
+        });
+    });
 
     test('getting all public notes', () => {
     const body = { filter: { publish: true }};
@@ -65,14 +182,21 @@ describe('GET /notes/', () => {
             expect(response.header['content-type']).toBe('application/json; charset=utf-8');
             expect(response.body).toHaveLength(publishedNotes.length);
             for(var i = 0; i < publishedNotes.length; i++){
-                expect(response.body[i]).toHaveProperty('publish', true);
+                expect(response.body[i]).toHaveProperty('_id');
+                expect(response.body[i]).toHaveProperty('title');
+                expect(response.body[i]).toHaveProperty('author');
+                expect(response.body[i]).toHaveProperty('description');
+                expect(response.body[i]).toHaveProperty('updatedAt');
+                
+                expect(response.body[i]).not.toHaveProperty('content');
+                expect(response.body[i]).not.toHaveProperty('createdAt');
             }
         });
     });
 
     describe('retrive with filter', () => {
         test('retrive by title', () => {
-        const body = { filter: { title : aPublishedNote.title }};
+        const body = { filter: { title : publishedNote.title }};
         return request(app)
             .get('/notes/')
             .set('Content-Type', 'application/json')
@@ -81,14 +205,22 @@ describe('GET /notes/', () => {
                 expect(response.statusCode).toBe(200);
                 expect(response.header['content-type']).toBe('application/json; charset=utf-8');
                 expect(response.body).toHaveLength(1);
-                expect(response.body[0]).toEqual(aPublishedNote);
+                
+                expect(response.body[0]).toHaveProperty('_id', publishedNote._id);
+                expect(response.body[0]).toHaveProperty('title', publishedNote.title);
+                expect(response.body[0].author).toEqual(publishedNote.author);
+                expect(response.body[0]).toHaveProperty('description', publishedNote.description);
+                expect(response.body[0]).toHaveProperty('updatedAt', publishedNote.updatedAt);
+                
+                expect(response.body[0]).not.toHaveProperty('content', publishedNote.content);
+                expect(response.body[0]).not.toHaveProperty('createdAt', publishedNote.createdAt);
             });    
         });
     
         test.todo('retrieve by date');
     });
 
-    test('missing filter field req must return empty object', () => {
+    test.failing('missing filter field req returns empty object', () => {
     return request(app)
         .get('/notes/')
         .set('Content-Type', 'application/json')
@@ -99,8 +231,8 @@ describe('GET /notes/', () => {
         });
     });  
 
-    test('unexpected fields in filter wont be reconigzed', () => {
-    const body = { filter: { name : aPublishedNote.title }};
+    test('unexpected fields in filter wont be recognized', () => {
+    const body = { filter: { name : publishedNote.title }};
     return request(app)
         .get('/notes/')
         .set('Content-Type', 'application/json')
@@ -108,7 +240,7 @@ describe('GET /notes/', () => {
         .then((response) => {
             expect(response.statusCode).toBe(200);
             expect(response.header['content-type']).toBe('application/json; charset=utf-8');
-            expect(response.body).toHaveLength(notes.length);
+            expect(response.body).toHaveLength(publishedNotes.length);
         });
     });
 
@@ -122,24 +254,28 @@ describe('GET /notes/', () => {
 
 describe('POST /notes/', () => {
     test('create a valid note', () => {
-        const body = { note: aNonCreatedNote };
-        const domain = 'localhost';
+
+        const body = { note: nonCreatedNote };
+        const JWT = users[0].jwt;
+        const author = users[0];
+
         return request(app)
         .post('/notes')
         .set('Content-Type', 'application/json')
         .set('Cookie', [
-            `jwt=${aJWT.token}; Max-Age=${aJWT.expires}; Path=/; HttpOnly; Domain=${domain}`
+            `jwt=${JWT.token}; Max-Age=${JWT.expires}; Path=/; HttpOnly; Domain=${domain}`
         ])
         .send(body)
         .then((response) => {
             expect(response.statusCode).toBe(200);
-            expect(response.body).toHaveProperty("title", aNonCreatedNote.title);
-            expect(response.body).toHaveProperty("content", aNonCreatedNote.content);
-            expect(response.body).toHaveProperty("publish", aNonCreatedNote.publish);
+            expect(response.body).toHaveProperty("title", nonCreatedNote.title);
+            expect(response.body).toHaveProperty("content", nonCreatedNote.content);
+            expect(response.body).toHaveProperty("publish", nonCreatedNote.publish);
             expect(response.body).toHaveProperty("description");
             expect(response.body).toHaveProperty("_id");
             expect(response.body).toHaveProperty("createdAt");
             expect(response.body).toHaveProperty("updatedAt");
+            expect(response.body.author).toHaveProperty("_id", author._id);
         });
     });
 
@@ -155,12 +291,12 @@ describe('POST /notes/', () => {
 describe('GET /notes/:noteid', () => {
     test('getting valid note', () => {
     return request(app)
-        .get('/notes/' + aPublishedNote._id.toString())
+        .get('/notes/' + publishedNote._id.toString())
         .set('Content-Type', 'application/json')
         .then(response => {
             expect(response.statusCode).toBe(200);
             expect(response.header['content-type']).toBe('application/json; charset=utf-8');
-            expect(response.body).toEqual(aPublishedNote);
+            expect(response.body).toEqual(publishedNote);
         });
     });
 

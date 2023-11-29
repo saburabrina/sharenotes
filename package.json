@@ -7,6 +7,10 @@
     "db": "mongod --dbpath=\"Documents\\mongodb\\data\" --bind_ip 127.0.0.1",
     "tests": "set DEBUG=sharenotes:* && set NODE_ENV=test&& jest"
   },
+  "jest": {
+    "testSequencer" : "./jest/test-sequencer.js",
+    "collectCoverage" : true
+  },
   "dependencies": {
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
@@ -20,6 +24,7 @@
     "mongoose": "^7.0.4",
     "morgan": "~1.9.1",
     "passport": "^0.6.0",
+    "passport-anonymous": "^1.0.1",
     "passport-jwt": "^4.0.1"
   },
   "devDependencies": {

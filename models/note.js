@@ -18,6 +18,10 @@ const noteSchema = new Schema({
     publish: {
         type: Boolean,
         default: true
+    },
+    author: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     }
 }, {
     timestamps: true
