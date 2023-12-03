@@ -11,7 +11,7 @@ const utils = require('./lib/utils');
 
 dotenv.config({path: `.env.${process.env.NODE_ENV}`});
 
-require('./passport/passport')(passport);
+require('./passport/passport').setupStrategies(passport);
 
 mongoose.connect(utils.getDBURL()).then(
 (db) => console.log("Connected correctly to Database."), 
