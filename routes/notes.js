@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const passport = require('passport');
+const { authenticatedRoute } = require('../passport/passport');
 const { filterNotes, createNote, findNoteById, updateNote, deleteNote } = require('../models/noteModel');
 const errors = require('../lib/errors');
 const notesRouter = express.Router();
@@ -80,7 +80,7 @@ notesRouter.use('/:noteId', (req, res, next) => {
 
 notesRouter.route('/')
 
-.get(passport.authenticate(['jwt', 'anonymous'], { session: false }),
+.get(authenticatedRoute(),
 (req, res, next) => {
     if (!req.body.filter) req.body.filter = {};
     next();
@@ -95,7 +95,7 @@ notesRouter.route('/')
     .catch((err) => next(errors.basicNoteError(err.message)));
 })
 
-.post(passport.authenticate('jwt', { session: false }),
+.post(authenticatedRoute(true),
 (req, res, next) => {
     if(!req.body.note) res.json({});
     else next();
@@ -117,14 +117,14 @@ notesRouter.route('/')
 
 notesRouter.route("/:noteId")
 
-.get(
+.get(authenticatedRoute(),
 (req, res, next) => {
-    findNoteById(req.params.noteId)
+    findNoteById(req.params.noteId, req.user)
     .then((note) => res.json(Note(note)))
     .catch((err) => next(errors.basicNoteError(err.message)));
 })
 
-.put(passport.authenticate('jwt', { session: false }),
+.put(authenticatedRoute(true),
 (req, res, next) => {
     if(!req.body.note) res.json({});
     else next();
@@ -138,7 +138,7 @@ notesRouter.route("/:noteId")
         next(errors.basicNoteError(err.message, "Error on note update. Try again.")));
 })
 
-.delete(passport.authenticate('jwt', { session: false }),
+.delete(authenticatedRoute(true),
 (req, res, next) => { 
     deleteNote(req.params.noteId, req.user)
     .then(() => res.end())
