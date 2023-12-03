@@ -45,7 +45,7 @@ let users = [
 let nonCreatedNote = {
     title : "How to walk",
     content : "move a foot then the other",
-    publish : true
+    publish : false
 };
 
 let publishedNotes;
@@ -256,8 +256,8 @@ describe('POST /notes/', () => {
     test('create a valid note', () => {
 
         const body = { note: nonCreatedNote };
-        const JWT = users[0].jwt;
         const author = users[0];
+        const JWT = author.jwt;
 
         return request(app)
         .post('/notes')

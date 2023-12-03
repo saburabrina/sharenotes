@@ -65,14 +65,28 @@ module.exports.createNote = function (data, user) {
     return NoteModel.create(note);
 };
 
-module.exports.findNoteById = function (id) {
-    return NoteModel.findById(id).populate('author');
+module.exports.findNoteById = function (id, user) {
+    return NoteModel.findById(id).populate('author')
+    .then(note => {
+        if(note && ((user && note.author._id === user._id) || note.publish)) return Promise.resolve(note);
+        else Promise.reject(new Error("Note does not exist or is not available"));
+    });
 }
 
 module.exports.updateNote = function (noteId, updates, user) {
-    return NoteModel.findOneAndUpdate({ _id: noteId, author: user._id }, updates, { new: true });
+    return NoteModel.findOne({ _id: noteId }, 'author')
+    .then(note => {
+        if(note && note.author === user._id) return NoteModel.updateOne({ _id: noteId }, updates);
+        else if(note && note.author !== user._id) return Promise.reject(new Error("Unauthorized operation"));
+        else return Promise.reject(new Error("No note with given id was found"));
+    });
 }
 
 module.exports.deleteNote = function (noteId, user) {
-    return NoteModel.findOneAndDelete({ _id: noteId, author: user._id });
+    return NoteModel.findOne({ _id: noteId }, 'author')
+    .then(note => {
+        if(note && note.author === user._id) return NoteModel.deleteOne({ _id: noteId });
+        else if(note && note.author !== user._id) return Promise.reject(new Error("Unauthorized operation"));
+        else return Promise.reject(new Error("No note with given id was found"));
+    });
 }
