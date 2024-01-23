@@ -1,4 +1,4 @@
-const UserModel = require('./user');
+const model = require('./user');
 const { emailREGEX, generatePassword, isCorrectPassword, issueJWT } = require('../lib/utils');
 
 function User (name, nickname, email, hash, salt) {
@@ -19,13 +19,17 @@ function isValid (user) {
     if(!user.name || !user.nickname || !user.email) return false;
     if(!user.email.match(emailREGEX)) return false;
     if(!user.password) return false;
+    else return isStrong(user.password)
+}
+
+function isStrong(password) {
     return true;
 }
 
 async function exists (user) {
     var userExists = false;
 
-    await UserModel.findOne({ $or: [
+    await model.findOne({ $or: [
         { email: user.email }, 
         { nickname: user.nickname }
     ]})
@@ -38,8 +42,60 @@ async function exists (user) {
     return userExists;
 }
 
-module.exports.Login = function (email, password) {
-    return UserModel.findOne({ email: email })
+module.exports.findUserById = function (id) {
+    return model.findById(id)
+    .then(user => {
+        if(user) return Promise.resolve(user);
+        else Promise.reject(new Error("User does not exist"));
+    });
+}
+
+module.exports.findUsers = function (filter) {
+    return model.find(filter)
+    .catch((err) => Promise.reject(new Error("Error on users search")));
+}
+
+module.exports.updateUserPassword = function (userId, password, user) {
+    if(!(user._id.equals(userId))) return Promise.reject(new Error("Not allowed."));
+
+    if (!isCorrectPassword(password.old, user.hash, user.salt)) 
+        return Promise.reject(new Error("Password does not match."));
+    
+    if(!isStrong(password.new)) return Promise.reject(new Error("Password is too weak."));
+
+    var [salt, hash] = generatePassword(password.new);
+
+    return model.findByIdAndUpdate(userId, { salt, hash })
+    .catch(() => Promise.reject(new Error("Error on password update.")));;
+}
+
+module.exports.updateUser = function (userId, updates, user) {
+    if(!(user._id.equals(userId))) return Promise.reject(new Error("Not allowed."));
+
+    return model.findByIdAndUpdate(userId, updates, { returnDocument: 'after'})
+    .catch(() => Promise.reject(new Error("Error on user update.")));
+}
+
+module.exports.createUser = async function (data) {
+    if(!isValid(data)) return Promise.reject(new Error("Invalid data for user creation."));
+    if(await exists(data)) return Promise.reject(new Error("User with given email or nickname already exists."));
+    
+    [data.salt, data.hash] = generatePassword(data.password);
+    var user = UserByObject(data);
+    
+    return model.create(user)
+    .catch(() => Promise.reject(new Error("Error on user register.")));
+}
+
+module.exports.deleteUser = function (userId, user) {
+    if(!(user._id.equals(userId))) return Promise.reject(new Error("Not allowed."));
+
+    return model.findByIdAndDelete(userId)
+    .catch(() => Promise.reject(new Error("Error on user deletion.")));
+}
+
+module.exports.login = function (email, password) {
+    return model.findOne({ email: email })
     .then((user) => { 
         if (!user) 
         return Promise.reject(new Error("User does not exist. Given email not found."));
@@ -52,12 +108,4 @@ module.exports.Login = function (email, password) {
     });
 }
 
-module.exports.Signup = async function (data) {
-    if(!isValid(data)) return Promise.reject(new Error("Invalid data for user creation."));
-    if(await exists(data)) return Promise.reject(new Error("User already exists."));
-    
-    [data.salt, data.hash] = generatePassword(data.password);
-    var user = UserByObject(data);
-    
-    return UserModel.create(user);
-}
+module.exports.User = User;

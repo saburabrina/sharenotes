@@ -21,7 +21,7 @@ function filterNotesAsNotLoggedUser (filter) {
     if(filterForUnpublished) return Promise.resolve([]);
 
     filter.publish = true;
-    return NoteModel.find(filter).populate('author');
+    return NoteModel.find(filter);
 }
 
 function filterNotesAsLoggedUser (filter, user) {
@@ -48,9 +48,8 @@ function filterNotesAsLoggedUser (filter, user) {
         }
     }
 
-    return NoteModel.find(filter).populate('author');
+    return NoteModel.find(filter);
 }
-
 
 module.exports.filterNotes = function (filter, user) {
     if(user) return filterNotesAsLoggedUser(filter, user);
