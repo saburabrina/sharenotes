@@ -21,6 +21,7 @@ function filterNotesAsNotLoggedUser (filter) {
     if(filterForUnpublished) return Promise.resolve([]);
 
     filter.publish = true;
+
     return NoteModel.find(filter);
 }
 

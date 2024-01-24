@@ -21,13 +21,18 @@ router.post('/login', (req, res, next) => {
 }, function(req, res, next){
     login(req.body.credentials.email, req.body.credentials.password)
     .then((token) => { 
-        res.cookie("jwt", token.token, {maxAge: token.expires, httpOnly: true});
+        res.cookie("jwt", token.token, { maxAge: token.expires, httpOnly: true });
         res.end();
         return;
     })
     .catch((err) => {   
         return next(errors.nonExistentUserWithGivenCredentials(req.body.credentials, err.message));
     });
+});
+
+router.get('/logout', (req, res, next) => {
+    res.clearCookie("jwt", { httpOnly: true });
+    res.end();
 });
 
 module.exports = router;

@@ -94,7 +94,7 @@ usersRouter.route('/:userId')
         return filterNotes({ author: user._id }, req.user)
         .then((notes) => {
             user.notes = notes;
-            if(user._id.equals(req.user._id)) res.json(Profile(user));
+            if(req.user && user._id.equals(req.user._id)) res.json(Profile(user));
             else res.json(User(user));
         });
     })
