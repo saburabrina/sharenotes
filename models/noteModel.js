@@ -4,10 +4,10 @@ const NoteModel = require('./note');
 function Note(note) {
     var Note = {}
     Note.title = note.title;
+    Note.description = note.description;
+    Note.content = note.content;
+    Note.publish = note.publish;
     Note.author = note.author;
-    if('description' in note) Note.description = note.description;
-    if('content' in note) Note.content = note.content;
-    if('publish' in note) Note.publish = note.publish;
     return Note;
 }
 
@@ -18,11 +18,12 @@ function isValid (note) {
 
 function filterNotesAsNotLoggedUser (filter) {
     const filterForUnpublished = ('publish' in filter) && !filter.publish;
+
     if(filterForUnpublished) return Promise.resolve([]);
+    else filter.publish = true;
 
-    filter.publish = true;
-
-    return NoteModel.find(filter);
+    return NoteModel.find(filter).populate('author')
+    .catch(() => Promise.reject(new Error("Error on notes search.")));
 }
 
 function filterNotesAsLoggedUser (filter, user) {
@@ -49,7 +50,8 @@ function filterNotesAsLoggedUser (filter, user) {
         }
     }
 
-    return NoteModel.find(filter);
+    return NoteModel.find(filter).populate('author')
+    .catch(() => Promise.reject(new Error("Error on notes search.")));
 }
 
 module.exports.filterNotes = function (filter, user) {
@@ -57,21 +59,22 @@ module.exports.filterNotes = function (filter, user) {
     else return filterNotesAsNotLoggedUser(filter);
 };
 
+module.exports.findNoteById = function (id, user) {
+    return NoteModel.findById(id).populate('author')
+    .then(note => {
+        if(note && ((user && note.author._id === user._id) || note.publish)) return Promise.resolve(note);
+        else return Promise.reject(new Error("Note does not exist or is not available"));
+    });
+}
+
 module.exports.createNote = function (data, user) {
     if (!isValid(data)) return new Promise.reject("Invalid Note");
     
     data.author = user._id;
     var note = Note(data);
-    return NoteModel.create(note);
+    return NoteModel.create(note)
+    .catch(() => Promise.reject(new Error("Error on note creation")));
 };
-
-module.exports.findNoteById = function (id, user) {
-    return NoteModel.findById(id).populate('author')
-    .then(note => {
-        if(note && ((user && note.author._id === user._id) || note.publish)) return Promise.resolve(note);
-        else Promise.reject(new Error("Note does not exist or is not available"));
-    });
-}
 
 module.exports.updateNote = function (noteId, updates, user) {
     return NoteModel.findOne({ _id: noteId }, 'author')
@@ -90,3 +93,5 @@ module.exports.deleteNote = function (noteId, user) {
         else return Promise.reject(new Error("No note with given id was found"));
     });
 }
+
+module.exports.Note = Note;

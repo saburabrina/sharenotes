@@ -1,18 +1,19 @@
 var express = require('express');
-var usersRouter = express.Router();
+const mongoose = require('mongoose');
+const usersRouter = express.Router();
 
 const { findUserById, findUsers, createUser, updateUser, updateUserPassword, deleteUser }  = require('../models/userModel');
 const { filterNotes }  = require('../models/noteModel');
 
-const errors = require('../lib/errors');
 const { authenticatedRoute } = require('../passport/passport');
+const errors = require('../lib/errors');
 
 function User (user) {
     var User = {};
     User._id = user._id;
     User.nickname = user.nickname;
     User.createdAt = user.createdAt;
-    if("notes" in user) User.notes = user.notes;
+    if("notes" in user) User.notes = Notes(user.notes);
     return User;
 };
 
@@ -34,10 +35,29 @@ function Profile (user) {
     User.nickname = user.nickname;
     User.email = user.email;
     User.createdAt = user.createdAt;
-    User.updatedAt = user.updatedAt;
-    User.notes = ("notes" in user) ? user.notes : [];
+    User.notes = ("notes" in user) ? Notes(user.notes) : [];
     return User;
 };
+
+function Note(note) {
+    var Note = {}
+    Note._id = note._id;
+    Note.title = note.title;
+    Note.description = note.description;
+    Note.updatedAt = note.updatedAt;
+    return Note;
+}
+
+function Notes(notes) {
+    var Notes = [];
+    
+    for(var i = 0; i < notes.length; i++){
+        var note = Note(notes[i]);
+        Notes.push(note);
+    }
+
+    return Notes;
+}
 
 function Updates (updates) {
     var Updates = {};
@@ -59,6 +79,16 @@ usersRouter.use((req, res, next) => {
     next();
 });
 
+usersRouter.use('/:userId', (req, res, next) => {
+    if(mongoose.isValidObjectId(req.params.userId)) next();
+    else next({ 
+        status: 404,
+        clientMsg: "Inexistent user", 
+        message: "Inexistent user",
+        value: req.params.userId
+    });
+});
+
 usersRouter.route('/')
 
 .get((req, res, next) => {
@@ -72,7 +102,7 @@ usersRouter.route('/')
     if(!req.body.user || !req.body.user.password || 
         !req.body.user.name || !req.body.user.nickname || !req.body.user.email) 
     next(errors.missingRequiredDataToSignup());
-    next();
+    else next();
 
 }, (req, res, next) => {
     createUser(req.body.user)

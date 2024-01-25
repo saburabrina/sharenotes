@@ -1,18 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const { authenticatedRoute } = require('../passport/passport');
-const { filterNotes, createNote, findNoteById, updateNote, deleteNote } = require('../models/noteModel');
-const errors = require('../lib/errors');
 const notesRouter = express.Router();
 
-function Author(author) {
-    var Author = {}
-    Author._id = author._id;
-    Author.nickname = author.nickname;
-    return Author;
-}
+const { filterNotes, createNote, findNoteById, updateNote, deleteNote } = require('../models/noteModel');
 
-function Note(note) {
+const { authenticatedRoute } = require('../passport/passport');
+const errors = require('../lib/errors');
+
+function Note(note) { 
     var Note = {}
     Note._id = note._id;
     Note.title = note.title;
@@ -23,6 +18,13 @@ function Note(note) {
     Note.createdAt = note.createdAt;
     Note.updatedAt = note.updatedAt;
     return Note;
+}
+
+function Author(author) {
+    var Author = {}
+    Author._id = author._id;
+    Author.nickname = author.nickname;
+    return Author;
 }
 
 function SummarizedNote(note) {
@@ -97,7 +99,11 @@ notesRouter.route('/')
 
 .post(authenticatedRoute(true),
 (req, res, next) => {
-    if(!req.body.note) res.json({});
+    if(!req.body.note || !req.body.note.title) 
+    next({ 
+        status: 400,
+        message: "Missing required data for note creation"
+    })
     else next();
 
 }, (req, res, next) => {
