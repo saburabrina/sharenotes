@@ -128,7 +128,9 @@ usersRouter.route('/:userId')
             else res.json(User(user));
         });
     })
-    .catch(err => next(errors.basicUserError(err.message)));
+    .catch(err => {
+        next(errors.basicUserError(err.message, err.message))
+    });
 })
 
 .put(authenticatedRoute(true),
@@ -153,7 +155,10 @@ usersRouter.route('/:userId')
 .delete(authenticatedRoute(true),
 (req, res, next) => {
     deleteUser(req.params.userId, req.user)
-    .then(() => res.end())
+    .then(() => {
+        res.clearCookie("jwt", { httpOnly: true });
+        res.end();
+    })
     .catch((error) => next(errors.basicUserError(error.message, error.message)));
 })
 
