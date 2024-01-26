@@ -11,13 +11,11 @@ const userSchema = new Schema({
     nickname: {
         type: String,
         required: true,
-        unique: true,
         trim: true
     },
     email: {
         type: String,
         required: true,
-        unique: true,
         lowercase: true,
         trim: true,
         match: emailREGEX
@@ -29,6 +27,10 @@ const userSchema = new Schema({
     salt: {
         type: String,
         required: true
+    }, 
+    deleted : {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

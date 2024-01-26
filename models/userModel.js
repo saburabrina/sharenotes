@@ -30,8 +30,8 @@ async function exists (user) {
     var userExists = false;
 
     await model.findOne({ $or: [
-        { email: user.email }, 
-        { nickname: user.nickname }
+        { email: user.email, deleted: false }, 
+        { nickname: user.nickname, deleted: false }
     ]})
     .then((user) => {
         if(user != null) userExists = true;
@@ -43,14 +43,16 @@ async function exists (user) {
 }
 
 module.exports.findUserById = function (id) {
-    return model.findById(id)
+    return model.findOne({ _id: id, deleted: false })
     .then(user => {
         if(user) return Promise.resolve(user);
-        else Promise.reject(new Error("User does not exist"));
+        else return Promise.reject(new Error("User does not exist"));
     });
 }
 
 module.exports.findUsers = function (filter) {
+    filter.deleted = false;
+
     return model.find(filter)
     .catch((err) => Promise.reject(new Error("Error on users search")));
 }
@@ -65,14 +67,14 @@ module.exports.updateUserPassword = function (userId, password, user) {
 
     var [salt, hash] = generatePassword(password.new);
 
-    return model.findByIdAndUpdate(userId, { salt, hash })
+    return model.findOneAndUpdate({ _id: userId, deleted: false }, { salt, hash })
     .catch(() => Promise.reject(new Error("Error on password update.")));;
 }
 
 module.exports.updateUser = function (userId, updates, user) {
     if(!(user._id.equals(userId))) return Promise.reject(new Error("Not allowed."));
 
-    return model.findByIdAndUpdate(userId, updates, { returnDocument: 'after'})
+    return model.findOneAndUpdate({ _id: userId, deleted: false }, updates, { returnDocument: 'after'})
     .catch(() => Promise.reject(new Error("Error on user update.")));
 }
 
@@ -90,12 +92,12 @@ module.exports.createUser = async function (data) {
 module.exports.deleteUser = function (userId, user) {
     if(!(user._id.equals(userId))) return Promise.reject(new Error("Not allowed."));
 
-    return model.findByIdAndDelete(userId)
+    return model.findByIdAndUpdate(userId, { deleted: true })
     .catch(() => Promise.reject(new Error("Error on user deletion.")));
 }
 
 module.exports.login = function (email, password) {
-    return model.findOne({ email: email })
+    return model.findOne({ email: email, deleted: false })
     .then((user) => { 
         if (!user) 
         return Promise.reject(new Error("User does not exist. Given email not found."));
