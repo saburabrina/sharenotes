@@ -16,18 +16,15 @@ router.get('/', function(req, res, next) {
 
 router.post('/login', (req, res, next) => {
     if(!req.body.credentials || !req.body.credentials.password || !req.body.credentials.email) 
-    next(errors.missingRequiredDataToLogin());
-    next();
+    next(errors.missingRequiredData());
+    else next();
 }, function(req, res, next){
     login(req.body.credentials.email, req.body.credentials.password)
     .then((token) => { 
         res.cookie("jwt", token.token, { maxAge: token.expires, httpOnly: true });
         res.end();
-        return;
     })
-    .catch((err) => {   
-        return next(errors.nonExistentUserWithGivenCredentials(req.body.credentials, err.message));
-    });
+    .catch((err) => next(err));
 });
 
 router.get('/logout', (req, res, next) => {

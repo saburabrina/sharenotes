@@ -81,12 +81,7 @@ usersRouter.use((req, res, next) => {
 
 usersRouter.use('/:userId', (req, res, next) => {
     if(mongoose.isValidObjectId(req.params.userId)) next();
-    else next({ 
-        status: 404,
-        clientMsg: "Inexistent user", 
-        message: "Inexistent user",
-        value: req.params.userId
-    });
+    else next(errors.notFound());
 });
 
 usersRouter.route('/')
@@ -95,19 +90,19 @@ usersRouter.route('/')
     var filter = Filter(req.query);
     findUsers(filter)
     .then((users) => res.json(Users(users)))
-    .catch((err) => next(errors.basicUserError(err.message, err.message)));
+    .catch((err) => next(err));
 })
 
 .post((req, res, next) => {
     if(!req.body.user || !req.body.user.password || 
         !req.body.user.name || !req.body.user.nickname || !req.body.user.email) 
-    next(errors.missingRequiredDataToSignup());
+    next(errors.missingRequiredData());
     else next();
 
 }, (req, res, next) => {
     createUser(req.body.user)
     .then(() => res.end())
-    .catch((err) => next(errors.basicUserError(err.message, "Error on user signup")));
+    .catch((err) => next(err));
 })
 
 .all((req, res, next) => {
@@ -128,14 +123,12 @@ usersRouter.route('/:userId')
             else res.json(User(user));
         });
     })
-    .catch(err => {
-        next(errors.basicUserError(err.message, err.message))
-    });
+    .catch((err) => next(err));
 })
 
 .put(authenticatedRoute(true),
 (req, res, next) => {
-    if(!req.body.user) return res.json({});
+    if(!req.body.user) next(errors.missingRequiredData());
     else next();
 },
 (req, res, next) => {
@@ -149,7 +142,7 @@ usersRouter.route('/:userId')
             res.json(Profile(mUser));
         });
     })
-    .catch((err) => next(errors.basicUserError(err.message, err.message)));
+    .catch((err) => next(err));
 })
 
 .delete(authenticatedRoute(true),
@@ -159,7 +152,7 @@ usersRouter.route('/:userId')
         res.clearCookie("jwt", { httpOnly: true });
         res.end();
     })
-    .catch((error) => next(errors.basicUserError(error.message, error.message)));
+    .catch((err) => next(err));
 })
 
 .all((req, res, next) => {
@@ -171,14 +164,14 @@ usersRouter.route('/:userId/password')
 
 .put(authenticatedRoute(true),
 (req, res, next) => {
-    if(!req.body.password) return res.json({});
-    if(!req.body.password.old || !req.body.password.new) return res.json({});
+    if(!req.body.password || !req.body.password.old || !req.body.password.new) 
+    next(errors.missingRequiredData());
     else next();
 },
 (req, res, next) => {
     updateUserPassword(req.params.userId, req.body.password, req.user)
     .then(() => res.end())
-    .catch((err) => next(errors.basicUserError(err.message, err.message)));
+    .catch((err) => next(err));
 })
 
 .all((req, res, next) => {

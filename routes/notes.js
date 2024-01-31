@@ -77,7 +77,7 @@ notesRouter.use((req, res, next) => {
 
 notesRouter.use('/:noteId', (req, res, next) => {
     if(mongoose.isValidObjectId(req.params.noteId)) next();
-    else next(errors.inexistentNoteId(req.params.noteId));
+    else next(errors.notFound());
 });
 
 notesRouter.route('/')
@@ -94,16 +94,13 @@ notesRouter.route('/')
     .then((notes) => {
         res.json(Notes(notes));
     })
-    .catch((err) => next(errors.basicNoteError(err.message)));
+    .catch((err) => next(err));
 })
 
 .post(authenticatedRoute(true),
 (req, res, next) => {
     if(!req.body.note || !req.body.note.title) 
-    next({ 
-        status: 400,
-        message: "Missing required data for note creation"
-    })
+    next(errors.missingRequiredData())
     else next();
 
 }, (req, res, next) => {
@@ -111,8 +108,7 @@ notesRouter.route('/')
     .then((note) => {
         res.json(Note(note));
     })
-    .catch((err) => 
-        next(errors.basicNoteError(err.message, "Error on note creation. Try again.")));
+    .catch((err) => next(err));
 })
 
 .all((req, res, next) => {
@@ -127,12 +123,12 @@ notesRouter.route("/:noteId")
 (req, res, next) => {
     findNoteById(req.params.noteId, req.user)
     .then((note) => res.json(Note(note)))
-    .catch((err) => next(errors.basicNoteError(err.message)));
+    .catch((err) => next(err));
 })
 
 .put(authenticatedRoute(true),
 (req, res, next) => {
-    if(!req.body.note) res.json({});
+    if(!req.body.note) next(errors.missingRequiredData());
     else next();
 
 }, (req, res, next) => {
@@ -140,16 +136,14 @@ notesRouter.route("/:noteId")
 
     updateNote(req.params.noteId, updates, req.user)
     .then((note) => res.json(Note(note)))
-    .catch((err) => 
-        next(errors.basicNoteError(err.message, "Error on note update. Try again.")));
+    .catch((err) => next(err));
 })
 
 .delete(authenticatedRoute(true),
 (req, res, next) => { 
     deleteNote(req.params.noteId, req.user)
     .then(() => res.end())
-    .catch((err) => 
-        next(errors.basicNoteError(err.message, "Error on note deletion. Try again.")));
+    .catch((err) => next(err));
 })
 
 .all((req, res, next) => {
