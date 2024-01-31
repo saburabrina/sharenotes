@@ -18,7 +18,7 @@ function UserByObject ({ name, nickname, email, hash, salt }) {
 }
 
 function isValid (user) {
-    if(!user.name || !user.nickname || !user.email) return false;
+    if(!("name" in user) || !("nickname" in user) || !("email" in user)) return false;
     if(!user.email.match(emailREGEX)) return false;
     if(!user.password) return false;
     else return isStrong(user.password)

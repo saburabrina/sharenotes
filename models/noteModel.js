@@ -13,8 +13,10 @@ function Note(note) {
     return Note;
 }
 
-function isValid (note) {
-    if(!note.title || !note.title.trim()) return false;
+function isValid (note, isUpdate = false) {
+    if((!("title" in note) && !isUpdate) || 
+        !note.title.trim()) return false;
+    if(("publish" in note) && typeof note.publish != Boolean) return false;
     return true;
 }
 
@@ -70,15 +72,18 @@ module.exports.findNoteById = function (id, user) {
 }
 
 module.exports.createNote = function (data, user) {
-    if (!isValid(data)) return Promise.reject(errors.invalidData());
-    
     data.author = user._id;
     var note = Note(data);
+
+    if (!isValid(note)) return Promise.reject(errors.invalidData());
+    
     return NoteModel.create(note)
     .catch((err) => Promise.reject(errors.basicError(err.message)));
 };
 
 module.exports.updateNote = function (noteId, updates, user) {
+    if (!isValid(updates, true)) return Promise.reject(errors.invalidData());
+
     return NoteModel.findOne({ _id: noteId }, 'author')
     .then(note => {
         if(note && note.author === user._id) return NoteModel.updateOne({ _id: noteId }, updates);
