@@ -13,7 +13,13 @@ module.exports.find = function (data, page) {
     var skip = notesToSkip(page);
     data.deleted = false;
 
-    return UserDocument.find(data).sort({ nickname : 1, _id : 1 }).skip(skip).limit(notesPerPage);
+    return UserDocument.find(data).sort({ nickname : 1, _id : 1 })
+    .skip(skip).limit(notesPerPage)
+    .then((users) => {
+        return UserDocument.countDocuments(data)
+        .then((total) => {
+            return { total: total, users: users }});
+    });
 }
 
 module.exports.findById = function (id) {

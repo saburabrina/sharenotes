@@ -14,7 +14,7 @@ function User (user) {
     User._id = user._id;
     User.nickname = user.nickname;
     User.createdAt = user.createdAt;
-    if("notes" in user) User.notes = Notes(user.notes);
+    if("notes" in user) User.notes = { notes : Notes(user.notes.notes), total : user.notes.total };
     
     return User;
 };
@@ -60,7 +60,7 @@ module.exports.Profile = function (user) {
     User.nickname = user.nickname;
     User.email = user.email;
     User.createdAt = user.createdAt;
-    User.notes = ("notes" in user) ? Notes(user.notes) : [];
+    User.notes = ("notes" in user) ? { notes : Notes(user.notes.notes), total : user.notes.total } : [];
     
     return User;
 };

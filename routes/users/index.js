@@ -31,7 +31,10 @@ usersRouter.route('/')
     var filter = Filter(req.body.filter);
 
     findUsers(filter, req.body.page)
-    .then((users) => res.json(Users(users)))
+    .then((result) => {
+        result.users = Users(result.users);
+        res.json(result)
+    })
     .catch((err) => next(err));
 })
 

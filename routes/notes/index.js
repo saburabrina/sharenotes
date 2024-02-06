@@ -31,8 +31,9 @@ notesRouter.route('/')
     var filter = Filter(req.body.filter);
     
     findNotes(filter, req.body.page, req.user)
-    .then((notes) => {
-        res.json(Notes(notes));
+    .then((result) => {
+        result.notes = Notes(result.notes);
+        res.json(result);
     })
     .catch((err) => next(err));
 })
