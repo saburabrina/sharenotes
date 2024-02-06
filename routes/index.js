@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { login }  = require('../models/userModel');
+const { login }  = require('../models/users/');
 const errors = require('../lib/errors');
 
 router.use((req, res, next) => {

@@ -1,7 +1,7 @@
 const passport = require('passport');
 var JwtStrategy = require('passport-jwt').Strategy;
 var AnonymousStrategy = require('passport-anonymous').Strategy;
-var User = require('../models/user');
+var { findUserById } = require('../models/users/');
 
 var options = {
     secretOrKey: process.env.PUB_KEY,
@@ -15,7 +15,7 @@ var options = {
   
 module.exports.setupStrategies = (passport) => {
     passport.use(new JwtStrategy(options, (jwt_payload, done) => {
-        User.findById(jwt_payload.sub)
+        findUserById(jwt_payload.sub)
         .then((user) => {
             if (user) {
                 return done(null, user);

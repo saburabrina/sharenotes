@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const { emailREGEX } = require('../lib/utils');
+
+const { emailREGEX } = require('../../lib/utils');
 
 const userSchema = new Schema({
     name: {
