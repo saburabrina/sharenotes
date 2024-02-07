@@ -119,3 +119,50 @@ module.exports.deleteNote = function (noteId, user) {
             return Promise.reject(errors.notFound("Note with given id not found ond Database."));
     });
 }
+
+module.exports.commentNote = function (noteId, comment, user) {
+    return persistence.findById(noteId)
+    .then(note => {
+        if(note) {
+            if(!note.publish) 
+                return Promise.reject(errors.notFound("Note is private."));
+            
+            else if (!(comment.comment.trim())) 
+                return Promise.reject(errors.invalidData("Empty Comment"));
+
+            else {
+                comment.author = user._id;
+                note.comments.push(comment);
+                var updates = { comments: note.comments }
+
+                return persistence.updateById(noteId, updates);
+            }
+        }       
+        else 
+            return Promise.reject(errors.notFound("Note with given id not found ond Database."));
+    });
+}
+
+module.exports.deleteComment = function (noteId, commentId, user) {
+    return persistence.findById(noteId)
+    .then(note => {
+        if(note) {
+            var comment = note.comments.id(commentId);
+
+            if(comment == null || !note.publish)
+                return Promise.reject(errors.notFound("Comment not found or note is private."));
+
+            else if(!IsUserTheAuthor(comment.author._id, user._id))
+                return Promise.reject(errors.unauthorizedOperation());
+
+            else {
+                note.comments.pull(comment);
+
+                var updates = { comments: note.comments }
+                return persistence.updateById(noteId, updates);
+            }
+        }       
+        else 
+            return Promise.reject(errors.notFound("Note with given id not found ond Database."));
+    });
+}

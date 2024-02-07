@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 const express = require('express');
 const notesRouter = express.Router();
 
-const { createNote, findNote, findNotes, updateNote, deleteNote } = require('../../models/notes/');
-const { Filter, CreationNotePattern, UpdateNotePattern, DetailedNote, Notes } = require('./objects');
+const { createNote, findNote, findNotes, updateNote, deleteNote, commentNote, deleteComment } = require('../../models/notes/');
+const { Filter, CreationNotePattern, UpdateNotePattern, DetailedNote, Notes, CreationCommentPattern, Comments } = require('./objects');
 
 const { authenticatedRoute } = require('../../passport/passport');
 const errors = require('../../lib/errors');
@@ -16,6 +16,17 @@ notesRouter.use((req, res, next) => {
 
 notesRouter.use('/:noteId', (req, res, next) => {
     if(mongoose.isValidObjectId(req.params.noteId)) next();
+    else next(errors.notFound());
+});
+
+notesRouter.use('/:noteId/comments', (req, res, next) => {
+    if(mongoose.isValidObjectId(req.params.noteId)) next();
+    else next(errors.notFound());
+});
+
+notesRouter.use('/:noteId/comments/:commentId', (req, res, next) => {
+    if(mongoose.isValidObjectId(req.params.noteId) && 
+        mongoose.isValidObjectId(req.params.commentId)) next();
     else next(errors.notFound());
 });
 
@@ -86,6 +97,46 @@ notesRouter.route("/:noteId")
 .delete(authenticatedRoute(true),
 (req, res, next) => { 
     deleteNote(req.params.noteId, req.user)
+    .then(() => res.end())
+    .catch((err) => next(err));
+})
+
+.all((req, res, next) => {
+    res.status(405);
+    res.end();
+});
+
+notesRouter.route("/:noteId/comments")
+
+.get((req, res, next) => {
+    findNote({ _id: req.params.noteId }, req.user)
+    .then((note) => res.json(Comments(note.comments)))
+    .catch((err) => next(err));
+})
+
+.post(authenticatedRoute(true),
+(req, res, next) => {
+    if(!req.body.comment) next(errors.missingRequiredData());
+    else next();
+},
+(req, res, next) => {
+    var comment = CreationCommentPattern(req.body.comment);
+
+    commentNote(req.params.noteId, comment, req.user)
+    .then((note) => res.json(Comments(note.comments)))
+    .catch((err) => next(err));
+})
+
+.all((req, res, next) => {
+    res.status(405);
+    res.end();
+});
+
+notesRouter.route("/:noteId/comments/:commentId")
+
+.delete(authenticatedRoute(true),
+(req, res, next) => { 
+    deleteComment(req.params.noteId, req.params.commentId, req.user)
     .then(() => res.end())
     .catch((err) => next(err));
 })

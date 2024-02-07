@@ -12,7 +12,7 @@ module.exports.create = function (note) {
 module.exports.find = function (data, page) {
     var skip = notesToSkip(page);
 
-    return NoteDocument.find(data).populate('author')
+    return NoteDocument.find(data).populate(['author', 'comments.author'])
     .sort({ updatedAt : -1, _id : 1 }).skip(skip).limit(notesPerPage)
     .then((notes) => {
         return NoteDocument.countDocuments(data)
@@ -22,11 +22,11 @@ module.exports.find = function (data, page) {
 }
 
 module.exports.findOne = function (data) {
-    return NoteDocument.findOne(data).populate('author');
+    return NoteDocument.findOne(data).populate(['author', 'comments.author']);
 }
 
 module.exports.findById = function (id) {
-    return NoteDocument.findById(id).populate('author');
+    return NoteDocument.findById(id).populate(['author', 'comments.author']);
 }
 
 module.exports.updateById = function (id, updates) {

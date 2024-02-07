@@ -7,6 +7,37 @@ function Author(author) {
     return Author;
 }
 
+module.exports.CreationCommentPattern = function (comment) {
+    var AComment = {}
+
+    AComment.comment = comment.comment;
+
+    return AComment;
+}
+
+function AComment(comment) {
+    var AComment = {}
+
+    AComment._id = comment._id;
+    AComment.comment = comment.comment;
+    AComment.createdAt = comment.createdAt;
+    AComment.author = Author(comment.author);
+
+    return AComment;
+}
+
+function Comments(comments) {
+    var Comments = [];
+
+    for(var i = 0; i < comments.length; i++){
+        var comment = AComment(comments[i]);
+        Comments.push(comment);
+    }
+
+    return Comments;
+}
+module.exports.Comments = Comments;
+
 module.exports.Filter = function (filter) {
     var Filter = {}
 
@@ -54,6 +85,7 @@ module.exports.DetailedNote = function (note) {
     Note.publish = note.publish;
     Note.createdAt = note.createdAt;
     Note.updatedAt = note.updatedAt;
+    Note.comments = Comments(note.comments);
 
     return Note;
 }

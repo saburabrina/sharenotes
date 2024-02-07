@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+const commentSchema = require('./comment');
+
 const noteSchema = new Schema({
     title: {
         type: String,
@@ -22,7 +24,8 @@ const noteSchema = new Schema({
     author: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    }
+    },
+    comments : [ commentSchema ]
 }, {
     timestamps: true
 });
