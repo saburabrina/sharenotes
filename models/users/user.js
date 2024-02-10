@@ -14,6 +14,11 @@ const userSchema = new Schema({
         required: true,
         trim: true
     },
+    bio : {
+        type: String,
+        default: "Hi! :)",
+        trim: true
+    },
     email: {
         type: String,
         required: true,

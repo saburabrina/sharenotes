@@ -8,6 +8,7 @@ function User (user) {
 
     User.name = user.name;
     User.nickname = user.nickname;
+    if("bio" in user) User.bio = user.bio;
     User.email = user.email;
     User.hash = user.hash;
     User.salt = user.salt;

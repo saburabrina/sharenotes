@@ -98,6 +98,7 @@ function SummarizedNote (note) {
     Note.author = Author(note.author);
     Note.description = note.description;
     Note.updatedAt = note.updatedAt;
+    Note.publish = note.publish;
     
     return Note;
 }
