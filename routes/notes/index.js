@@ -5,7 +5,7 @@ const notesRouter = express.Router();
 const { createNote, findNote, findNotes, updateNote, deleteNote, commentNote, deleteComment } = require('../../models/notes/');
 const { Filter, CreationNotePattern, UpdateNotePattern, DetailedNote, Notes, CreationCommentPattern, Comments } = require('./objects');
 
-const { authenticatedRoute } = require('../../passport/passport');
+const { authenticatedRoute } = require('../../passport/');
 const errors = require('../../lib/errors');
 
 notesRouter.use((req, res, next) => {

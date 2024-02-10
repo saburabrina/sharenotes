@@ -1,7 +1,7 @@
 const passport = require('passport');
 var JwtStrategy = require('passport-jwt').Strategy;
 var AnonymousStrategy = require('passport-anonymous').Strategy;
-var { findUserById } = require('../models/users/');
+var { findUserById } = require('../models/users');
 
 var options = {
     secretOrKey: process.env.PUB_KEY,

@@ -6,7 +6,7 @@ const { findUserById, findUsers, createUser, updateUser, updateUserPassword, del
 const { findNotes }  = require('../../models/notes/');
 const { Filter, Profile, User, Users, CreationUserPattern, UpdateUserPattern } = require('./objects');
 
-const { authenticatedRoute } = require('../../passport/passport');
+const { authenticatedRoute } = require('../../passport/');
 const errors = require('../../lib/errors');
 
 usersRouter.use((req, res, next) => {
