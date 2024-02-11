@@ -20,6 +20,17 @@ usersRouter.use('/:userId', (req, res, next) => {
     else next(errors.notFound());
 });
 
+usersRouter.use('/:userId/favorites', (req, res, next) => {
+    if(mongoose.isValidObjectId(req.params.userId)) next();
+    else next(errors.notFound());
+});
+
+usersRouter.use('/:userId/favorites/:favoriteId', (req, res, next) => {
+    if(mongoose.isValidObjectId(req.params.userId) &&
+    mongoose.isValidObjectId(req.params.favoriteId)) next();
+    else next(errors.notFound());
+});
+
 usersRouter.route('/')
 
 .get((req, res, next) => {
