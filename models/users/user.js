@@ -26,6 +26,10 @@ const userSchema = new Schema({
         trim: true,
         match: emailREGEX
     },
+    favorites: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Note'
+    }],
     hash: {
         type: String,
         required: true

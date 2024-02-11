@@ -59,6 +59,7 @@ module.exports.User = function (user) {
     User.nickname = user.nickname;
     User.bio = user.bio;
     User.createdAt = user.createdAt;
+    User.favorites = Notes(user.favorites);
     User.notes = { notes : Notes(user.notes.notes), total : user.notes.total };
     
     return User;
@@ -73,7 +74,8 @@ module.exports.Profile = function (user) {
     User.bio = user.bio;
     User.email = user.email;
     User.createdAt = user.createdAt;
+    User.favorites = Notes(user.favorites);
     User.notes = { notes : Notes(user.notes.notes), total : user.notes.total };
-    
+
     return User;
 };

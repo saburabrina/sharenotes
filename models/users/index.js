@@ -102,6 +102,54 @@ module.exports.deleteUser = function (userId, user) {
         errors.basicError(err.message)));
 }
 
+module.exports.createFavorite = function (userId, favoriteId, user) {
+    if(!(user._id.equals(userId))) 
+        return Promise.reject(errors.unauthorizedOperation());
+
+    return persistence.findById(userId)
+    .then((usr) => {
+        if(usr) {
+            var favorite = usr.favorites.find((v,i,a) => (v._id == favoriteId));
+
+            if(favorite) 
+                return Promise.reject(errors.duplicatedResource());
+
+            else {
+                usr.favorites.push(favoriteId);
+
+                var updates = { favorites: usr.favorites }
+                return persistence.updateById(userId, updates);
+            }
+        }
+        else
+            return Promise.reject(errors.notFound("User not found."));
+    });
+}
+
+module.exports.deleteFavorite = function (userId, favoriteId, user) {
+    if(!(user._id.equals(userId))) 
+        return Promise.reject(errors.unauthorizedOperation());
+
+    return persistence.findById(userId)
+    .then((usr) => {
+        if(usr) {
+            var favorite = usr.favorites.find((v,i,a) => (v._id == favoriteId));
+
+            if(!favorite) 
+                return Promise.reject(errors.notFound());
+
+            else {
+                usr.favorites.pull(favorite);
+
+                var updates = { favorites: usr.favorites }
+                return persistence.updateById(userId, updates);
+            }
+        }
+        else
+            return Promise.reject(errors.notFound("User not found."));
+    });
+}
+
 module.exports.login = function (email, password) {
     return persistence.findByEmail(email)
     .then((user) => { 

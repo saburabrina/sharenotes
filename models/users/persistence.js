@@ -23,7 +23,7 @@ module.exports.find = function (data, page) {
 }
 
 module.exports.findById = function (id) {
-    return UserDocument.findOne({ _id: id, deleted: false });
+    return UserDocument.findOne({ _id: id, deleted: false }).populate('favorites');
 }
 
 module.exports.findByEmail = function (email) {

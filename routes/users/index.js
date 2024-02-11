@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const express = require('express');
 const usersRouter = express.Router();
 
-const { findUserById, findUsers, createUser, updateUser, updateUserPassword, deleteUser }  = require('../../models/users/');
+const { findUserById, findUsers, createUser, updateUser, updateUserPassword, deleteUser, createFavorite, deleteFavorite }  = require('../../models/users/');
 const { findNotes }  = require('../../models/notes/');
 const { Filter, Profile, User, Users, CreationUserPattern, UpdateUserPattern } = require('./objects');
 
@@ -117,6 +117,41 @@ usersRouter.route('/:userId/password')
 },
 (req, res, next) => {
     updateUserPassword(req.params.userId, req.body.password, req.user)
+    .then(() => res.end())
+    .catch((err) => next(err));
+})
+
+.all((req, res, next) => {
+    res.status(405);
+    res.end();
+});
+
+usersRouter.route('/:userId/favorites')
+
+.post(authenticatedRoute(true),
+(req, res, next) => { 
+    if(!req.body.favorite) next(errors.missingRequiredData());
+    else next();
+}, (req, res, next) => {
+    createFavorite(req.params.userId, req.body.favorite, req.user)
+    .then(() => res.end())
+    .catch((err) => next(err));
+})
+
+.all((req, res, next) => {
+    res.status(405);
+    res.end();
+});
+
+usersRouter.route('/:userId/favorites/:favoriteId')
+
+.get((req, res, next) => {
+    res.redirect('/notes/' + req.params.favoriteId);
+})
+
+.delete(authenticatedRoute(true),
+(req, res, next) => {
+    deleteFavorite(req.params.userId, req.params.favoriteId, req.user)
     .then(() => res.end())
     .catch((err) => next(err));
 })
