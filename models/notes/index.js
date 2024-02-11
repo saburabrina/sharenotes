@@ -15,6 +15,10 @@ function IsUserTheAuthor(authorId, userId) {
 }
 
 function makeFilter (filter, user) {
+    if("title" in filter) filter.title = new RegExp(filter.title, "i");
+    if("description" in filter) filter.description = new RegExp(filter.description, "i");
+    if("content" in filter) filter.content = new RegExp(filter.content, "i");
+
     if(user) { 
         var filterForPrivateFromUser = { ...filter };
         filterForPrivateFromUser.author = new ObjectId(user._id);
