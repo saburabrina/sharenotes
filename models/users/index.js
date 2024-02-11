@@ -56,7 +56,7 @@ module.exports.createUser = async function (data) {
 }
 
 module.exports.findUserById = function (id) {
-    return persistence.findById(id)
+    return persistence.findByIdAndPopulate(id)
     .then(user => {
         if(user) return Promise.resolve(user);
         else return Promise.reject(errors.notFound("User does not exist"));
@@ -109,7 +109,7 @@ module.exports.createFavorite = function (userId, favoriteId, user) {
     return persistence.findById(userId)
     .then((usr) => {
         if(usr) {
-            var favorite = usr.favorites.find((v,i,a) => (v._id == favoriteId));
+            var favorite = usr.favorites.includes(favoriteId);
 
             if(favorite) 
                 return Promise.reject(errors.duplicatedResource());
@@ -133,13 +133,13 @@ module.exports.deleteFavorite = function (userId, favoriteId, user) {
     return persistence.findById(userId)
     .then((usr) => {
         if(usr) {
-            var favorite = usr.favorites.find((v,i,a) => (v._id == favoriteId));
+            var favorite = usr.favorites.includes(favoriteId);
 
             if(!favorite) 
                 return Promise.reject(errors.notFound());
 
             else {
-                usr.favorites.pull(favorite);
+                usr.favorites.pull(favoriteId);
 
                 var updates = { favorites: usr.favorites }
                 return persistence.updateById(userId, updates);

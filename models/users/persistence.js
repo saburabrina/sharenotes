@@ -23,6 +23,10 @@ module.exports.find = function (data, page) {
 }
 
 module.exports.findById = function (id) {
+    return UserDocument.findOne({ _id: id, deleted: false });
+}
+
+module.exports.findByIdAndPopulate = function (id) {
     return UserDocument.findOne({ _id: id, deleted: false }).populate('favorites');
 }
 
@@ -42,5 +46,5 @@ module.exports.updateById = function (id, updates) {
 }
 
 module.exports.deleteById = function (id) {
-    return UserDocument.findByIdAndUpdate(id, { deleted: true })
+    return UserDocument.findByIdAndUpdate(id, { deleted: true });
 }
