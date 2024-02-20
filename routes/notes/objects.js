@@ -41,13 +41,7 @@ module.exports.Comments = Comments;
 module.exports.Filter = function (filter) {
     var Filter = {}
 
-    if("title" in filter) Filter.title = filter.title;
-    if("author" in filter) Filter.author = filter.author;
-    if("description" in filter) Filter.description = filter.description;
-    if("content" in filter) Filter.content = filter.content;
-    if("publish" in filter) Filter.publish = filter.publish;
-    if("createdAt" in filter) Filter.createdAt = filter.createdAt;
-    if("updatedAt" in filter) Filter.updatedAt = filter.updatedAt;
+    Filter.text = filter.text;
     
     return Filter;
 }

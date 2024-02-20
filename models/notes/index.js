@@ -15,48 +15,36 @@ function IsUserTheAuthor(authorId, userId) {
 }
 
 function makeFilter (filter, user) {
-    if("title" in filter) filter.title = new RegExp(filter.title, "i");
-    if("description" in filter) filter.description = new RegExp(filter.description, "i");
-    if("content" in filter) filter.content = new RegExp(filter.content, "i");
 
-    if(user) { 
-        var filterForPrivateFromUser = { ...filter };
-        filterForPrivateFromUser.author = new ObjectId(user._id);
-        filterForPrivateFromUser.publish = false;
+    var fltr = [];
 
-        var filterForPrivateFromOtherAuthor = null;
+    function createPublicFilter(field, value) {
+        var pf = { publish: true };
+        pf[field] = value;
 
-        var filterForPublished = { ...filter };
-        filterForPublished.publish = true;
+        fltr.push(pf);        
+    };
 
-        var filterByOtherAttributes = { $or: [ filterForPublished, filterForPrivateFromUser ]};
+    function createPrivateFilter(field, value) {
+        var prvf = { publish: false, author: new ObjectId(user._id) };
+        prvf[field] = value;
 
-        if("publish" in filter) {
-            if(filter.publish === false) {
-                if(("author" in filter) && !IsUserTheAuthor(filter.author, user._id)) 
-                    return filterForPrivateFromOtherAuthor;
+        fltr.push(prvf);        
+    };
+    
+    if(filter.text) {
+        filter.text = new RegExp(filter.text, "i");
+        
+        createPublicFilter("title", filter.text);
+        createPublicFilter("description", filter.text);
 
-                else return filterForPrivateFromUser;
-            }
-
-            else return filter;
+        if(user) {
+            createPrivateFilter("title", filter.text);
+            createPrivateFilter("description", filter.text);
         }
-        else if("author" in filter) {
-            if(!IsUserTheAuthor(filter.author, user._id)) 
-                return filterForPublished;
-            else return filter
-        }
-        else return filterByOtherAttributes;
-
-    } else {
-        var filterForPublished = { ...filter };
-        filterForPublished.publish = true;
-
-        var filterForPrivate = null;
-
-        if(("publish" in filter) && filter.publish === false) return filterForPrivate;
-        else return filterForPublished;
     }
+
+    return fltr.length == 0 ? {} : { $or: fltr }; 
 }
 
 module.exports.createNote = function (note, user) {
@@ -85,6 +73,8 @@ module.exports.findNote = function (filter, user) {
 
 module.exports.findNotes = function (filter, page, user) {
     filter = makeFilter(filter, user);
+
+    console.log(filter);
     
     if(filter == null) return Promise.resolve([]);
 
