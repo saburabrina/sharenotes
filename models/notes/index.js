@@ -14,37 +14,39 @@ function IsUserTheAuthor(authorId, userId) {
     return authorId.equals(userId);
 }
 
-function makeFilter (filter, user) {
+function makeFilter (data, user) {
 
-    var fltr = [];
+    var filter = [];
 
-    function createPublicFilter(field, value) {
-        var pf = { publish: true };
-        pf[field] = value;
+    if(!("text" in data)) data.text = "";
+    data.text = new RegExp(data.text, "i");
 
-        fltr.push(pf);        
-    };
+    var descriptionFilter = { description: data.text };
+    var titleFilter = { title: data.text };
 
-    function createPrivateFilter(field, value) {
-        var prvf = { publish: false, author: new ObjectId(user._id) };
-        prvf[field] = value;
+    var publishedFilter = { publish : true };
+    var timeRangeFilter = { updatedAt: { $gte: new Date(0) }};
 
-        fltr.push(prvf);        
-    };
-    
-    if(filter.text) {
-        filter.text = new RegExp(filter.text, "i");
-        
-        createPublicFilter("title", filter.text);
-        createPublicFilter("description", filter.text);
-
-        if(user) {
-            createPrivateFilter("title", filter.text);
-            createPrivateFilter("description", filter.text);
-        }
+    if(data.time) {
+        if("start" in data.time) timeRangeFilter.updatedAt.$gte = data.time.start;
+        if("end" in data.time) timeRangeFilter.updatedAt.$lt = data.time.end;
     }
 
-    return fltr.length == 0 ? {} : { $or: fltr }; 
+    filter.push(
+        { ...descriptionFilter, ...timeRangeFilter, ...publishedFilter },
+        { ...titleFilter, ...timeRangeFilter, ...publishedFilter },
+    );
+
+    if(user) {
+        var privateFilter = { publish : false, author: new ObjectId(user._id) };
+
+        filter.push(
+            { ...descriptionFilter, ...timeRangeFilter, ...privateFilter },
+            { ...titleFilter, ...timeRangeFilter, ...privateFilter }
+        );
+    }
+
+    return { $or : filter }; 
 }
 
 module.exports.createNote = function (note, user) {

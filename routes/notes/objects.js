@@ -38,10 +38,20 @@ function Comments(comments) {
 }
 module.exports.Comments = Comments;
 
+function TimeRange(range) {
+    var Range = {};
+
+    if("start" in range) Range.start = range.start;
+    if("end" in range) Range.end = range.end;
+
+    return Range;
+}
+
 module.exports.Filter = function (filter) {
     var Filter = {}
 
-    Filter.text = filter.text;
+    if("text" in filter) Filter.text = filter.text;
+    if("time" in filter) Filter.time = TimeRange(filter.time);
     
     return Filter;
 }
