@@ -1,6 +1,8 @@
 const persistence = require('./persistence');
 const errors = require('../../lib/errors');
 
+const noteModel = require('../notes/');
+
 const { emailREGEX, generatePassword, isCorrectPassword, issueJWT } = require('../../lib/utils');
 
 function User (user) {
@@ -106,23 +108,29 @@ module.exports.createFavorite = function (userId, favoriteId, user) {
     if(!(user._id.equals(userId))) 
         return Promise.reject(errors.unauthorizedOperation());
 
-    return persistence.findById(userId)
-    .then((usr) => {
-        if(usr) {
-            var favorite = usr.favorites.includes(favoriteId);
+    return noteModel.findNote({ _id : favoriteId }, user)
+    .then((favNote) => {
+        if(favNote) {
+            return persistence.findById(userId)
+            .then((usr) => {
+                if(usr) {
+                    var favorite = usr.favorites.includes(favNote);
 
-            if(favorite) 
-                return Promise.reject(errors.duplicatedResource());
+                    if(favorite) 
+                        return Promise.reject(errors.duplicatedResource());
 
-            else {
-                usr.favorites.push(favoriteId);
+                    else {
+                        usr.favorites.push(favNote);
 
-                var updates = { favorites: usr.favorites }
-                return persistence.updateById(userId, updates);
-            }
-        }
-        else
-            return Promise.reject(errors.notFound("User not found."));
+                        var updates = { favorites: usr.favorites }
+                        return persistence.updateById(userId, updates);
+                    }
+                }
+                else
+                    return Promise.reject(errors.notFound("User not found."));
+            });
+        } else 
+            return Promise.reject(errors.notFoundOrUnavailable("Note is private or does not exist."));
     });
 }
 

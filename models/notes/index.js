@@ -75,8 +75,6 @@ module.exports.findNote = function (filter, user) {
 
 module.exports.findNotes = function (filter, page, user) {
     filter = makeFilter(filter, user);
-
-    console.log(filter);
     
     if(filter == null) return Promise.resolve([]);
 
