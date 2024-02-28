@@ -15,11 +15,11 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/login', (req, res, next) => {
-    if(!req.body.credentials || !req.body.credentials.password || !req.body.credentials.email) 
+    if(!req.body.credentials || !req.body.credentials.password || !req.body.credentials.identifier) 
     next(errors.missingRequiredData());
     else next();
 }, function(req, res, next){
-    login(req.body.credentials.email, req.body.credentials.password)
+    login(req.body.credentials.identifier, req.body.credentials.password)
     .then((token) => { 
         res.cookie("jwt", token.token, { maxAge: token.expires, httpOnly: true });
         res.end();

@@ -158,11 +158,11 @@ module.exports.deleteFavorite = function (userId, favoriteId, user) {
     });
 }
 
-module.exports.login = function (email, password) {
-    return persistence.findByEmail(email)
+module.exports.login = function (identifier, password) {
+    return persistence.findByEmailOrNickname(identifier, identifier)
     .then((user) => { 
         if (!user) 
-        return Promise.reject(errors.dataDoesNotMatch("User does not exist. Given email not found."));
+        return Promise.reject(errors.dataDoesNotMatch("User does not exist. Given email or nickname not found."));
         
         if (!isCorrectPassword(password, user.hash, user.salt)) 
         return Promise.reject(errors.dataDoesNotMatch("Given password does not match given user's password."));
